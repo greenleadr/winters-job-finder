@@ -1,0 +1,93 @@
+{
+  "name": "Job Search Profile",
+  "headline": "Senior Technical Product Leader",
+  "summary": "Senior Technical Product Leader with 15+ years of experience at Amazon, Apple, Google, and Chewy, driving product strategy, platform development, and data-driven growth across e-commerce, SaaS, and enterprise domains.",
+  "target_titles": [
+    "Associate Director of Product",
+    "Senior Manager of Product Management",
+    "VP of Product",
+    "Vice President of Product",
+    "Director of Product",
+    "Senior Director of Product",
+    "Head of Product",
+    "VP Product Management"
+  ],
+  "skills": {
+    "high": [
+      "product strategy",
+      "roadmap",
+      "P&L",
+      "platform",
+      "product-led growth",
+      "data-driven",
+      "cross-functional",
+      "enterprise",
+      "SaaS",
+      "e-commerce",
+      "compliance",
+      "GRC",
+      "AI/ML",
+      "analytics",
+      "instrumentation"
+    ],
+    "medium": [
+      "agile",
+      "scrum",
+      "OKRs",
+      "voice of customer",
+      "privacy",
+      "PCI DSS",
+      "CCPA",
+      "stakeholder management",
+      "executive communication",
+      "people leadership"
+    ],
+    "low": [
+      "SQL",
+      "Tableau",
+      "dashboard",
+      "data pipeline",
+      "machine learning",
+      "computer vision"
+    ]
+  },
+  "experience": {
+    "total_years": 15,
+    "management_years": 8,
+    "largest_team_size": 21,
+    "notable_companies": [
+      "Amazon",
+      "Apple",
+      "Google",
+      "Chewy"
+    ],
+    "industries": [
+      "e-commerce",
+      "SaaS",
+      "retail",
+      "tech"
+    ]
+  },
+  "preferences": {
+    "work_arrangement": [
+      "remote",
+      "hybrid"
+    ],
+    "locations": [
+      "Seattle, WA",
+      "Bellevue, WA",
+      "Redmond, WA"
+    ],
+    "company_size": [
+      "mid-size",
+      "enterprise"
+    ]
+  },
+  "dealbreakers": [
+    "requires hands-on coding as primary function",
+    "requires CS degree",
+    "junior scope",
+    "contract under 6 months",
+    "unpaid or equity-only compensation"
+  ]
+}
