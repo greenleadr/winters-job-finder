@@ -3,6 +3,7 @@
 Environment variables:
     BREVO_SMTP_LOGIN — Brevo SMTP login (your Brevo account email)
     BREVO_SMTP_KEY   — Brevo SMTP password / API key
+    BREVO_SENDER     — From address, e.g. 'Name <user@domain.com>'
     EMAIL_TO         — recipient address (or comma-separated list)
 
 Usage:
@@ -20,10 +21,10 @@ from typing import Any
 
 SMTP_HOST = "smtp-relay.brevo.com"
 SMTP_PORT = 587
-SENDER = "Winters Job Finder <noreply@wintersjobfinder.com>"
+DEFAULT_SENDER = "Winters Product Group <jobfinder@michaeladamwinters.com>"
 
 
-def _get_config() -> tuple[str, str, list[str]]:
+def _get_config() -> tuple[str, str, str, list[str]]:
     smtp_login = os.environ.get("BREVO_SMTP_LOGIN", "")
     smtp_key = os.environ.get("BREVO_SMTP_KEY", "")
     if not smtp_login or not smtp_key:
@@ -32,13 +33,14 @@ def _get_config() -> tuple[str, str, list[str]]:
             "(SMTP password) environment variables are required. "
             "Get yours at https://app.brevo.com/settings/keys/smtp"
         )
+    sender = os.environ.get("BREVO_SENDER", DEFAULT_SENDER)
     raw_to = os.environ.get("EMAIL_TO", "")
     if not raw_to:
         raise RuntimeError(
             "EMAIL_TO environment variable is required (comma-separated for multiple)."
         )
     recipients = [addr.strip() for addr in raw_to.split(",") if addr.strip()]
-    return smtp_login, smtp_key, recipients
+    return smtp_login, smtp_key, sender, recipients
 
 
 def send_digest(
@@ -47,6 +49,7 @@ def send_digest(
     run_date: date | None = None,
     smtp_login: str | None = None,
     smtp_key: str | None = None,
+    sender: str | None = None,
     recipients: list[str] | None = None,
 ) -> None:
     """Send *html_body* as the digest email.
@@ -63,22 +66,25 @@ def send_digest(
         Overrides BREVO_SMTP_LOGIN env var.
     smtp_key : str, optional
         Overrides BREVO_SMTP_KEY env var.
+    sender : str, optional
+        Overrides BREVO_SENDER env var.
     recipients : list[str], optional
         Overrides EMAIL_TO env var.
     """
     today = run_date or date.today()
     date_str = today.strftime("%Y-%m-%d")
 
-    if smtp_login is None or smtp_key is None or recipients is None:
-        env_login, env_key, env_to = _get_config()
+    if smtp_login is None or smtp_key is None or sender is None or recipients is None:
+        env_login, env_key, env_sender, env_to = _get_config()
         smtp_login = smtp_login or env_login
         smtp_key = smtp_key or env_key
+        sender = sender or env_sender
         recipients = recipients or env_to
 
     subject = f"Job Digest — {date_str} — {job_count} matches"
 
     msg = MIMEMultipart("alternative")
-    msg["From"] = SENDER
+    msg["From"] = sender
     msg["To"] = ", ".join(recipients)
     msg["Subject"] = subject
 
@@ -97,7 +103,7 @@ def send_digest(
         server.starttls()
         server.ehlo()
         server.login(smtp_login, smtp_key)
-        server.sendmail(SENDER, recipients, msg.as_string())
+        server.sendmail(sender, recipients, msg.as_string())
 
     print(
         f"Digest sent to {', '.join(recipients)} "

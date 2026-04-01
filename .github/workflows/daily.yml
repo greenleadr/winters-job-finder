@@ -31,6 +31,7 @@ jobs:
           ADZUNA_API_KEY: ${{ secrets.ADZUNA_API_KEY }}
           BREVO_SMTP_LOGIN: ${{ secrets.BREVO_SMTP_LOGIN }}
           BREVO_SMTP_KEY: ${{ secrets.BREVO_SMTP_KEY }}
+          BREVO_SENDER: ${{ secrets.BREVO_SENDER }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           PROFILE_JSON: ${{ secrets.PROFILE_JSON }}
         run: python main.py
