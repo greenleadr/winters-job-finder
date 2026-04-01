@@ -1,0 +1,107 @@
+[
+  {
+    "name": "Zillow",
+    "ats_type": "workday",
+    "careers_url": "https://zillow.wd5.myworkdayjobs.com/Zillow_Group_External",
+    "location": "Seattle, WA",
+    "notes": "Remote-flexible (Cloud HQ model, 97% remote eligible). E-commerce/marketplace."
+  },
+  {
+    "name": "Redfin",
+    "ats_type": "workday",
+    "careers_url": "https://redfin.wd1.myworkdayjobs.com/redfin_careers",
+    "location": "Seattle, WA",
+    "notes": "Part of Rocket Companies. Real estate tech platform."
+  },
+  {
+    "name": "Expedia Group",
+    "ats_type": "workday",
+    "careers_url": "https://expedia.wd108.myworkdayjobs.com/search",
+    "location": "Seattle, WA",
+    "notes": "Large travel e-commerce platform. Multiple brands."
+  },
+  {
+    "name": "T-Mobile",
+    "ats_type": "workday",
+    "careers_url": "https://careers.t-mobile.com/jobs",
+    "location": "Bellevue, WA",
+    "notes": "Enterprise telecom. Large product org."
+  },
+  {
+    "name": "Nordstrom",
+    "ats_type": "workday",
+    "careers_url": "https://nordstrom.wd501.myworkdayjobs.com/nordstrom_careers",
+    "location": "Seattle, WA",
+    "notes": "Retail/e-commerce. Strong digital product teams."
+  },
+  {
+    "name": "Smartsheet",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/smartsheet",
+    "location": "Bellevue, WA",
+    "notes": "SaaS work management platform. Hybrid/remote options."
+  },
+  {
+    "name": "Qualtrics",
+    "ats_type": "greenhouse",
+    "careers_url": "https://www.qualtrics.com/careers/us/en",
+    "location": "Seattle, WA",
+    "notes": "Enterprise SaaS, experience management. Strong analytics/data focus."
+  },
+  {
+    "name": "GitLab",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/gitlab",
+    "location": "Remote",
+    "notes": "All-remote company (65+ countries). DevSecOps platform."
+  },
+  {
+    "name": "Stripe",
+    "ats_type": "greenhouse",
+    "careers_url": "https://stripe.com/jobs/search",
+    "location": "Seattle, WA / Remote",
+    "notes": "Fintech/payments platform. Seattle hub + remote roles."
+  },
+  {
+    "name": "Shopify",
+    "ats_type": "lever",
+    "careers_url": "https://www.shopify.com/careers",
+    "location": "Remote",
+    "notes": "Digital-by-default (remote-first). E-commerce platform leader."
+  },
+  {
+    "name": "HubSpot",
+    "ats_type": "greenhouse",
+    "careers_url": "https://www.hubspot.com/careers/jobs/all",
+    "location": "Remote",
+    "notes": "Enterprise SaaS CRM. Hybrid/remote. Consistently top-rated employer."
+  },
+  {
+    "name": "Coinbase",
+    "ats_type": "greenhouse",
+    "careers_url": "https://www.coinbase.com/careers/positions",
+    "location": "Remote",
+    "notes": "Remote-first. Crypto/fintech. Compliance and GRC focus."
+  },
+  {
+    "name": "Datadog",
+    "ats_type": "greenhouse",
+    "careers_url": "https://careers.datadoghq.com/all-jobs/",
+    "location": "Remote / Hybrid",
+    "notes": "SaaS observability platform. Strong analytics/instrumentation fit."
+  },
+  {
+    "name": "Cloudflare",
+    "ats_type": "greenhouse",
+    "careers_url": "https://www.cloudflare.com/careers/jobs/",
+    "location": "Remote / Hybrid",
+    "notes": "Enterprise infrastructure/security SaaS. High growth."
+  },
+  {
+    "name": "Chewy",
+    "ats_type": "workday",
+    "careers_url": "https://careers.chewy.com/us/en/search-results",
+    "location": "Bellevue, WA / Remote",
+    "notes": "E-commerce. Former employer — strong network advantage."
+  }
+]
