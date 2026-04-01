@@ -103,5 +103,145 @@
     "careers_url": "https://careers.chewy.com/us/en/search-results",
     "location": "Bellevue, WA / Remote",
     "notes": "E-commerce. Former employer — strong network advantage."
+  },
+  {
+    "name": "Outreach",
+    "ats_type": "lever",
+    "careers_url": "https://jobs.lever.co/outreach",
+    "location": "Seattle, WA",
+    "notes": "Sales engagement SaaS. Series D+, Seattle HQ."
+  },
+  {
+    "name": "Highspot",
+    "ats_type": "lever",
+    "careers_url": "https://jobs.lever.co/highspot",
+    "location": "Seattle, WA",
+    "notes": "Sales enablement SaaS, AI/ML-powered platform. Hybrid."
+  },
+  {
+    "name": "Rover",
+    "ats_type": "lever",
+    "careers_url": "https://jobs.lever.co/rover",
+    "location": "Seattle, WA",
+    "notes": "Pet marketplace. Hybrid (Mon/Thu in-office). Consumer + platform."
+  },
+  {
+    "name": "OfferUp",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/offerup",
+    "location": "Seattle, WA",
+    "notes": "Local commerce marketplace. 100M+ downloads. E-commerce."
+  },
+  {
+    "name": "Okta",
+    "ats_type": "greenhouse",
+    "careers_url": "https://boards.greenhouse.io/okta",
+    "location": "Seattle, WA / Remote",
+    "notes": "Enterprise identity/security SaaS. Compliance and GRC alignment."
+  },
+  {
+    "name": "Twilio",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/twilio",
+    "location": "Seattle, WA / Remote",
+    "notes": "Enterprise communications platform SaaS. Segment acquisition (analytics)."
+  },
+  {
+    "name": "Figma",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/figma",
+    "location": "Remote / Hybrid",
+    "notes": "Design platform SaaS. Product-led growth. Strong product org."
+  },
+  {
+    "name": "Notion",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/notion",
+    "location": "Remote / Hybrid",
+    "notes": "Productivity SaaS. Product-led growth. AI-focused roadmap."
+  },
+  {
+    "name": "Zapier",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/zapier",
+    "location": "Remote",
+    "notes": "All-remote. Automation platform SaaS. Product-led growth."
+  },
+  {
+    "name": "Samsara",
+    "ats_type": "greenhouse",
+    "careers_url": "https://boards.greenhouse.io/samsara",
+    "location": "Seattle, WA / Remote",
+    "notes": "IoT/operations SaaS. Data platform, analytics, AI/ML focus."
+  },
+  {
+    "name": "DoorDash",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/doordashusa",
+    "location": "Seattle, WA / Remote",
+    "notes": "E-commerce/logistics marketplace. Strong platform product org."
+  },
+  {
+    "name": "Instacart",
+    "ats_type": "greenhouse",
+    "careers_url": "https://www.instacart.careers/current-openings",
+    "location": "Remote",
+    "notes": "E-commerce/grocery marketplace. Ad platform, analytics."
+  },
+  {
+    "name": "Amplitude",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/amplitude",
+    "location": "Remote / Hybrid",
+    "notes": "Analytics SaaS platform. Perfect instrumentation/data-driven fit."
+  },
+  {
+    "name": "Braze",
+    "ats_type": "greenhouse",
+    "careers_url": "https://www.braze.com/company/careers",
+    "location": "Remote / Hybrid",
+    "notes": "Customer engagement SaaS. Data-driven, enterprise."
+  },
+  {
+    "name": "OneTrust",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/onetrust",
+    "location": "Remote / Hybrid",
+    "notes": "Privacy/compliance/GRC SaaS. Direct compliance and GRC match."
+  },
+  {
+    "name": "Drata",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/drata",
+    "location": "Remote",
+    "notes": "Compliance automation SaaS (SOC2, GRC). Strong compliance fit."
+  },
+  {
+    "name": "Grafana Labs",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/grafanalabs",
+    "location": "Remote",
+    "notes": "Observability/analytics SaaS. All-remote. Instrumentation fit."
+  },
+  {
+    "name": "Webflow",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/webflow",
+    "location": "Remote",
+    "notes": "No-code web platform SaaS. Product-led growth."
+  },
+  {
+    "name": "MongoDB",
+    "ats_type": "greenhouse",
+    "careers_url": "https://www.mongodb.com/careers/departments",
+    "location": "Seattle, WA / Remote",
+    "notes": "Enterprise database platform. SaaS (Atlas). Large product org."
+  },
+  {
+    "name": "Flexport",
+    "ats_type": "greenhouse",
+    "careers_url": "https://www.flexport.com/careers/jobs/",
+    "location": "Bellevue, WA / Remote",
+    "notes": "Supply chain/logistics platform. Acquired Convoy assets. Seattle presence."
   }
 ]
