@@ -74,7 +74,8 @@ Score badges: **green** (70+), **yellow** (50-69), **red** (<50).
 | `EMAIL_TO` | Yes | Recipient email(s), comma-separated |
 | `PROFILE_JSON` | No | Full profile as JSON string (overrides profile.json) |
 | `SKIP_EMAIL` | No | Set `true` to skip email send |
-| `USE_LLM_SCORING` | No | Set `true` to enable LLM re-scoring (stub) |
+| `ANTHROPIC_API_KEY` | No | Claude API key for LLM scoring ([console.anthropic.com](https://console.anthropic.com)) |
+| `USE_LLM_SCORING` | No | Set `true` to enable LLM re-scoring (auto-set if ANTHROPIC_API_KEY present) |
 
 ### Local Development
 
@@ -122,15 +123,16 @@ Optional: `BREVO_SENDER`
 | `db.py` | 205 | SQLite wrapper (init, dedup, save, history) |
 | `collectors/adzuna.py` | 160 | Adzuna API job collector |
 | `collectors/remotive.py` | 103 | Remotive API job collector |
-| `collectors/career_pages.py` | 25 | Career page scraper (stub) |
+| `scorer_llm.py` | 210 | Claude Haiku LLM re-scorer |
+| `collectors/career_pages.py` | 225 | Greenhouse/Lever/Ashby API scraper |
 | `emailer.py` | 131 | Brevo SMTP email sender |
 | `profile.json` | 93 | Candidate profile |
 | `companies.json` | ~600 | 85 target companies with ATS URLs |
 
 ## Roadmap
 
-- [ ] Implement `career_pages.py` collector (Greenhouse/Lever/Ashby API scrapers)
-- [ ] Implement `scorer_llm.py` for AI-powered re-scoring of top candidates
+- [x] Implement `career_pages.py` collector (Greenhouse/Lever/Ashby API scrapers)
+- [x] Implement `scorer_llm.py` for AI-powered re-scoring of top candidates
 - [ ] Add LinkedIn job collector
 - [ ] Improve scoring with full job descriptions from career pages
 - [ ] Add weekly summary report with trends

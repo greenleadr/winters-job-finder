@@ -34,6 +34,8 @@ jobs:
           BREVO_SENDER: ${{ secrets.BREVO_SENDER }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           PROFILE_JSON: ${{ secrets.PROFILE_JSON }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          USE_LLM_SCORING: ${{ secrets.ANTHROPIC_API_KEY && 'true' || 'false' }}
         run: python main.py
 
       - name: Commit jobs database

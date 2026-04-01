@@ -85,6 +85,44 @@ def _render_job_row(job: dict[str, Any], rank: int) -> str:
         meta_parts.append(date_posted)
     meta = " &middot; ".join(meta_parts)
 
+    # LLM insights (if available)
+    llm = s.get("llm", {})
+    llm_html = ""
+    if llm:
+        rec = llm.get("recommendation", "")
+        rec_colors = {"Apply": "#16a34a", "Maybe": "#ca8a04", "Skip": "#dc2626"}
+        rec_color = rec_colors.get(rec, "#64748b")
+        llm_score = llm.get("llm_score", "?")
+        strengths = llm.get("strengths", [])
+        concerns = llm.get("concerns", [])
+
+        rec_badge = (
+            f'<span style="display:inline-block;background:{rec_color};color:#fff;'
+            f'font-size:12px;font-weight:700;padding:3px 10px;border-radius:10px;'
+            f'margin-right:8px;">{_esc(rec)}</span>'
+        )
+        llm_score_text = f'<span style="color:#475569;font-size:12px;">AI: {llm_score}/10</span>'
+
+        detail_items = ""
+        if strengths:
+            detail_items += "".join(
+                f'<span style="color:#16a34a;font-size:12px;">+ {_esc(s)}</span><br>'
+                for s in strengths[:3]
+            )
+        if concerns:
+            detail_items += "".join(
+                f'<span style="color:#dc2626;font-size:12px;">- {_esc(c)}</span><br>'
+                for c in concerns[:3]
+            )
+
+        llm_html = (
+            f'<div style="margin-top:8px;padding:8px 12px;background:#f8fafc;'
+            f'border-radius:8px;border:1px solid #e2e8f0;">'
+            f'{rec_badge}{llm_score_text}'
+            f'<div style="margin-top:6px;">{detail_items}</div>'
+            f'</div>'
+        )
+
     return f"""
     <tr style="border-bottom:1px solid #e5e7eb;">
       <td style="padding:16px;vertical-align:top;width:36px;color:#94a3b8;
@@ -101,6 +139,7 @@ def _render_job_row(job: dict[str, Any], rank: int) -> str:
         <div style="color:#64748b;font-size:13px;margin-bottom:6px;">{meta}</div>
         <div style="margin-bottom:4px;">{skills_html}</div>
         {f'<div style="margin-top:6px;">{flags_html}</div>' if flags_html else ''}
+        {llm_html}
       </td>
     </tr>"""
 

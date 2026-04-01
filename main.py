@@ -130,14 +130,13 @@ def _matches_location(job: dict[str, Any]) -> bool:
 # ---------------------------------------------------------------------------
 
 def _llm_rescore(jobs: list[dict[str, Any]], profile: dict[str, Any]) -> list[dict[str, Any]]:
-    """Placeholder for LLM-based re-scoring.
-
-    When USE_LLM_SCORING=true, this will call scorer_llm.py on jobs
-    with a base score >= 50 to refine rankings.
-    """
-    # TODO: implement scorer_llm.py and call it here
-    print("LLM re-scoring: stub — no changes applied", file=sys.stderr)
-    return jobs
+    """Run LLM re-scoring on jobs with Tier 1 score >= 50."""
+    try:
+        from scorer_llm import score_jobs_llm
+        return score_jobs_llm(jobs, profile, threshold=50)
+    except Exception as exc:
+        print(f"LLM re-scoring failed: {exc}", file=sys.stderr)
+        return jobs
 
 
 # ---------------------------------------------------------------------------
