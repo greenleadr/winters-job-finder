@@ -1,8 +1,9 @@
 """Send the HTML job digest via Brevo SMTP.
 
 Environment variables:
-    BREVO_SMTP_KEY  — Brevo SMTP API key (used as the SMTP password)
-    EMAIL_TO        — recipient address (or comma-separated list)
+    BREVO_SMTP_LOGIN — Brevo SMTP login (your Brevo account email)
+    BREVO_SMTP_KEY   — Brevo SMTP password / API key
+    EMAIL_TO         — recipient address (or comma-separated list)
 
 Usage:
     python emailer.py          # sends a demo digest to EMAIL_TO
@@ -22,11 +23,13 @@ SMTP_PORT = 587
 SENDER = "Winters Job Finder <noreply@wintersjobfinder.com>"
 
 
-def _get_config() -> tuple[str, list[str]]:
+def _get_config() -> tuple[str, str, list[str]]:
+    smtp_login = os.environ.get("BREVO_SMTP_LOGIN", "")
     smtp_key = os.environ.get("BREVO_SMTP_KEY", "")
-    if not smtp_key:
+    if not smtp_login or not smtp_key:
         raise RuntimeError(
-            "BREVO_SMTP_KEY environment variable is required. "
+            "BREVO_SMTP_LOGIN (your Brevo account email) and BREVO_SMTP_KEY "
+            "(SMTP password) environment variables are required. "
             "Get yours at https://app.brevo.com/settings/keys/smtp"
         )
     raw_to = os.environ.get("EMAIL_TO", "")
@@ -35,13 +38,14 @@ def _get_config() -> tuple[str, list[str]]:
             "EMAIL_TO environment variable is required (comma-separated for multiple)."
         )
     recipients = [addr.strip() for addr in raw_to.split(",") if addr.strip()]
-    return smtp_key, recipients
+    return smtp_login, smtp_key, recipients
 
 
 def send_digest(
     html_body: str,
     job_count: int,
     run_date: date | None = None,
+    smtp_login: str | None = None,
     smtp_key: str | None = None,
     recipients: list[str] | None = None,
 ) -> None:
@@ -55,6 +59,8 @@ def send_digest(
         Number of jobs in the digest (used in the subject line).
     run_date : date, optional
         Defaults to today.
+    smtp_login : str, optional
+        Overrides BREVO_SMTP_LOGIN env var.
     smtp_key : str, optional
         Overrides BREVO_SMTP_KEY env var.
     recipients : list[str], optional
@@ -63,8 +69,9 @@ def send_digest(
     today = run_date or date.today()
     date_str = today.strftime("%Y-%m-%d")
 
-    if smtp_key is None or recipients is None:
-        env_key, env_to = _get_config()
+    if smtp_login is None or smtp_key is None or recipients is None:
+        env_login, env_key, env_to = _get_config()
+        smtp_login = smtp_login or env_login
         smtp_key = smtp_key or env_key
         recipients = recipients or env_to
 
@@ -89,7 +96,7 @@ def send_digest(
         server.ehlo()
         server.starttls()
         server.ehlo()
-        server.login(SENDER, smtp_key)
+        server.login(smtp_login, smtp_key)
         server.sendmail(SENDER, recipients, msg.as_string())
 
     print(
