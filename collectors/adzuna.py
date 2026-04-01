@@ -25,9 +25,13 @@ SEARCH_TITLES = [
     "Director Product",
     "Head of Product",
     "Vice President Product",
+    "Senior Director Product",
+    "Senior Manager Product",
+    "Associate Director Product",
+    "Group Product Manager",
 ]
 
-LOCATION = "Seattle"
+LOCATIONS = ["Seattle", "Remote"]
 RESULTS_PER_PAGE = 50
 MAX_PAGES = 5
 REQUEST_DELAY_SECONDS = 1.0
@@ -91,7 +95,7 @@ def _is_remote_or_seattle(result: dict[str, Any]) -> bool:
     title = result.get("title", "").lower()
     description = (result.get("description", "") or "").lower()
 
-    if LOCATION.lower() in location_name:
+    if "seattle" in location_name or "bellevue" in location_name or "redmond" in location_name:
         return True
 
     remote_signals = ["remote", "work from home", "anywhere"]
@@ -109,7 +113,8 @@ def search_jobs() -> list[dict[str, Any]]:
     seen_urls: set[str] = set()
 
     for title_query in SEARCH_TITLES:
-        print(f"Searching: {title_query!r}", file=sys.stderr)
+      for location in LOCATIONS:
+        print(f"Searching: {title_query!r} in {location}", file=sys.stderr)
 
         for page in range(1, MAX_PAGES + 1):
             params = urlencode(
@@ -117,7 +122,7 @@ def search_jobs() -> list[dict[str, Any]]:
                     "app_id": app_id,
                     "app_key": api_key,
                     "what": title_query,
-                    "where": LOCATION,
+                    "where": location,
                     "results_per_page": RESULTS_PER_PAGE,
                     "content-type": "application/json",
                 }
