@@ -110,10 +110,17 @@ def save_jobs(
 
         existing = conn.execute("SELECT 1 FROM jobs WHERE id = ?", (jid,)).fetchone()
         if existing:
-            conn.execute(
-                "UPDATE jobs SET last_seen = ?, score = ? WHERE id = ?",
-                (now, score_val, jid),
-            )
+            # Only update score if we have a real one (don't overwrite with None)
+            if score_val is not None:
+                conn.execute(
+                    "UPDATE jobs SET last_seen = ?, score = ?, matched_skills = ?, flags = ? WHERE id = ?",
+                    (now, score_val, matched_json, flags_json, jid),
+                )
+            else:
+                conn.execute(
+                    "UPDATE jobs SET last_seen = ? WHERE id = ?",
+                    (now, jid),
+                )
         else:
             conn.execute(
                 """INSERT INTO jobs

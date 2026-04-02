@@ -116,6 +116,22 @@ def _deduplicate(
     return new
 
 
+def _dedupe_by_title_company(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collapse jobs with the same title+company (different URL variants).
+
+    Greenhouse often posts one role with multiple location-specific URLs.
+    Keep the first occurrence and drop the rest.
+    """
+    seen: set[str] = set()
+    unique: list[dict[str, Any]] = []
+    for job in jobs:
+        key = f"{job.get('title', '').lower().strip()}|{job.get('company', '').lower().strip()}"
+        if key not in seen:
+            seen.add(key)
+            unique.append(job)
+    return unique
+
+
 # ---------------------------------------------------------------------------
 # 4. Location filter
 # ---------------------------------------------------------------------------
@@ -183,7 +199,11 @@ def run() -> None:
     raw_jobs = [j for j in raw_jobs if _is_recent(j)]
     print(f"After age filter (≤{MAX_JOB_AGE_DAYS}d): {len(raw_jobs)}", file=sys.stderr)
 
-    # 3. Deduplicate
+    # 2c. Collapse same title+company (Greenhouse multi-location dupes)
+    raw_jobs = _dedupe_by_title_company(raw_jobs)
+    print(f"After title+company dedup: {len(raw_jobs)}", file=sys.stderr)
+
+    # 3. Deduplicate against DB
     conn = db.init_db()
     new_jobs = _deduplicate(raw_jobs, conn)
     print(f"New (unseen) jobs: {len(new_jobs)}", file=sys.stderr)
