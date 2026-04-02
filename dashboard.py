@@ -133,13 +133,62 @@ def _render_job_row(job: dict[str, Any]) -> str:
     )
 
 
+def _render_tracking_section(funnel: dict[str, int]) -> str:
+    statuses = [
+        ("applied", "#3b82f6", "Applied"),
+        ("interviewing", "#a78bfa", "Interviewing"),
+        ("offer", "#22c55e", "Offer"),
+        ("rejected", "#ef4444", "Rejected"),
+        ("withdrawn", "#64748b", "Withdrawn"),
+    ]
+    rows = ""
+    for key, color, label in statuses:
+        count = funnel.get(key, 0)
+        if count:
+            rows += (
+                f'<div style="display:flex;align-items:center;margin-bottom:8px;">'
+                f'<div style="width:12px;height:12px;border-radius:50%;background:{color};'
+                f'margin-right:10px;"></div>'
+                f'<div style="color:#e2e8f0;font-size:14px;flex:1;">{label}</div>'
+                f'<div style="color:{color};font-size:20px;font-weight:800;">{count}</div>'
+                f'</div>'
+            )
+    if not rows:
+        return ""
+    return (
+        f'<div class="card">'
+        f'<h2>Application Tracking</h2>'
+        f'{rows}'
+        f'<div style="margin-top:10px;font-size:11px;color:#64748b;">'
+        f'Use <code style="background:#334155;padding:2px 6px;border-radius:4px;">'
+        f'python track.py set &lt;id&gt; applied</code> to track applications</div>'
+        f'</div>'
+    )
+
+
 def generate_dashboard(conn: sqlite3.Connection, run_date: date | None = None) -> str:
     """Generate the full dashboard HTML from database state."""
     today = run_date or date.today()
     date_str = today.strftime("%B %d, %Y")
 
+    # Load tracking overrides (separate DB, never overwritten by CI)
+    try:
+        import tracking
+        track_conn = tracking.init_tracking()
+        overrides = tracking.get_all_overrides(track_conn)
+        track_funnel = tracking.get_funnel(track_conn)
+        track_conn.close()
+    except Exception:
+        overrides = {}
+        track_funnel = {}
+
     # Query data
     all_7d = db.get_history(conn, days=7)
+    # Apply tracking overrides to status
+    for j in all_7d:
+        ov = overrides.get(j.get("id"))
+        if ov:
+            j["status"] = ov["status"]
     open_jobs = db.get_open_jobs(conn, days=7)
     closed_jobs = db.get_closed_jobs(conn, days=7)
     all_30d = db.get_history(conn, days=30)
@@ -150,6 +199,7 @@ def generate_dashboard(conn: sqlite3.Connection, run_date: date | None = None) -
     total_closed = len(closed_jobs)
     strong = sum(1 for j in all_7d if (j.get("score") or 0) >= 70)
     moderate = sum(1 for j in all_7d if 50 <= (j.get("score") or 0) < 70)
+    tracked_count = sum(track_funnel.values())
 
     # Source breakdown
     sources: dict[str, int] = {}
@@ -285,6 +335,7 @@ def generate_dashboard(conn: sqlite3.Connection, run_date: date | None = None) -
         {_stat_card(str(moderate), "Moderate 50+", "#facc15")}
         {_stat_card(str(total_closed), "Closed", "#f87171")}
         {_stat_card(str(len(all_30d)), "Total (30d)", "#93c5fd")}
+        {_stat_card(str(tracked_count), "Tracked", "#c084fc") if tracked_count else ""}
       </div>
     </div>
 
@@ -307,6 +358,9 @@ def generate_dashboard(conn: sqlite3.Connection, run_date: date | None = None) -
         {company_chart}
       </div>
     </div>
+
+    <!-- Application Tracking -->
+    {_render_tracking_section(track_funnel) if tracked_count else ""}
 
     <!-- Top Matches -->
     <div class="card">
