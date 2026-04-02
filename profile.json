@@ -10,7 +10,13 @@
     "Director of Product",
     "Senior Director of Product",
     "Head of Product",
-    "VP Product Management"
+    "VP Product Management",
+    "Director of Product Management",
+    "Senior Product Manager",
+    "Principal Product Manager",
+    "Group Product Manager",
+    "Director, Technical Product Management",
+    "VP of Product Management"
   ],
   "skills": {
     "high": [
@@ -28,7 +34,10 @@
       "GRC",
       "AI/ML",
       "analytics",
-      "instrumentation"
+      "instrumentation",
+      "supply chain",
+      "go-to-market",
+      "vendor management"
     ],
     "medium": [
       "agile",
@@ -40,7 +49,13 @@
       "CCPA",
       "stakeholder management",
       "executive communication",
-      "people leadership"
+      "people leadership",
+      "BigID",
+      "SailPoint",
+      "data classification",
+      "customer experience",
+      "contact center",
+      "third party logistics"
     ],
     "low": [
       "SQL",
@@ -48,7 +63,11 @@
       "dashboard",
       "data pipeline",
       "machine learning",
-      "computer vision"
+      "computer vision",
+      "React",
+      "Supabase",
+      "Vercel",
+      "Stripe"
     ]
   },
   "skill_variants": {
@@ -59,8 +78,7 @@
       "product planning",
       "product development strategy",
       "go-to-market strategy",
-      "GTM strategy",
-      "go-to-market"
+      "GTM strategy"
     ],
     "roadmap": [
       "product roadmap",
@@ -134,7 +152,8 @@
       "SOC 2",
       "governance",
       "regulatory compliance",
-      "compliance program"
+      "compliance program",
+      "compliance analytics"
     ],
     "GRC": [
       "governance risk and compliance",
@@ -171,6 +190,31 @@
       "metrics framework",
       "metrics instrumentation",
       "data instrumentation"
+    ],
+    "supply chain": [
+      "fulfillment",
+      "logistics",
+      "warehouse",
+      "distribution",
+      "inventory",
+      "upstream fulfillment",
+      "supply chain optimization"
+    ],
+    "go-to-market": [
+      "GTM",
+      "go to market",
+      "product launch",
+      "market entry",
+      "launch strategy"
+    ],
+    "vendor management": [
+      "partner management",
+      "vendor relations",
+      "partner operations",
+      "partner relationship",
+      "3PL",
+      "third-party",
+      "outsourcing"
     ],
     "agile": [
       "agile methodologies",
@@ -244,6 +288,43 @@
       "team building",
       "org building"
     ],
+    "BigID": [
+      "data discovery",
+      "data classification tool",
+      "PII discovery"
+    ],
+    "SailPoint": [
+      "identity governance",
+      "user access review",
+      "UAR",
+      "access management"
+    ],
+    "data classification": [
+      "data categorization",
+      "data inventory",
+      "data catalog",
+      "data mapping"
+    ],
+    "customer experience": [
+      "CX",
+      "customer journey",
+      "customer success",
+      "user experience",
+      "UX"
+    ],
+    "contact center": [
+      "call center",
+      "customer support",
+      "support operations",
+      "customer service",
+      "support center"
+    ],
+    "third party logistics": [
+      "3PL",
+      "logistics partner",
+      "fulfillment partner",
+      "outsourced logistics"
+    ],
     "dashboard": [
       "dashboards",
       "reporting",
@@ -281,6 +362,11 @@
       "visualization tools",
       "Looker",
       "Power BI"
+    ],
+    "React": [
+      "React.js",
+      "ReactJS",
+      "frontend framework"
     ]
   },
   "experience": {
@@ -302,7 +388,10 @@
       "supply chain",
       "logistics",
       "consumer electronics",
-      "contact center"
+      "contact center",
+      "healthcare",
+      "ad tech",
+      "fintech"
     ],
     "roles": [
       {
@@ -311,7 +400,8 @@
         "dates": "Oct 2025 – Present",
         "highlights": [
           "Fractional product leadership for not-for-profit, retail, and e-commerce businesses",
-          "Built VetReady: AI-powered pet health platform (React/Supabase/Stripe/Vercel, Anthropic Claude API)"
+          "Built VetReady: AI-powered pet health platform (React/Supabase/Stripe/Vercel, Anthropic Claude API)",
+          "Demonstrates ability to ramp quickly in new environments and ship end-to-end"
         ]
       },
       {
@@ -322,9 +412,10 @@
           "Built first automated compliance analytics platform from ground up",
           "Led PCI DSS 4.0 readiness across 3 business entities, reducing audit cycle time 50%",
           "Operationalized CCPA/DSAR program: 2-3K requests bi-weekly, 4-day avg completion (91% faster than SLA)",
+          "Deployed BigID data classification across 29+ data sources, managed 56-app UAR via SailPoint",
           "Directed 'Chewy Heartbeat' analytics dashboard for executive data visibility",
           "Designed AI/LLM enablement program for 20+ product teams",
-          "Managed 13 direct reports across global teams"
+          "Managed 13 direct reports across global teams; mentored 20% to promotion"
         ]
       },
       {
@@ -333,7 +424,8 @@
         "dates": "Jun 2022 – Apr 2023",
         "highlights": [
           "Led 21-person cross-functional team for computer vision defect detection",
-          "Deployed across 300+ fulfillment centers, 11% reduction in item defect rates"
+          "Deployed across 300+ fulfillment centers, 11% reduction in item defect rates",
+          "Owned full technical roadmap from ML research through frontline operational rollout"
         ]
       },
       {
@@ -354,8 +446,9 @@
         "dates": "Jul 2018 – Sep 2020",
         "highlights": [
           "Project Kariba: $293M supply chain cost avoidance over 3 years",
-          "Launched 7 new 3PL solutions, $50M+ NPV",
-          "Led pandemic-response tooling 5-day turnaround"
+          "Launched 7 new 3PL solutions in US and Canada, $50M+ NPV",
+          "Led pandemic-response tooling 5-day turnaround",
+          "Acted as primary technical liaison between Amazon and 3PL partners"
         ]
       },
       {
@@ -363,8 +456,9 @@
         "company": "Apple",
         "dates": "Oct 2015 – May 2017",
         "highlights": [
-          "Designed day-one support for Apple Watch 1.0, 96% CSAT at launch",
-          "Deployed real-time video/screen sharing/chatbot across 5 global contact centers, 2,000+ agents"
+          "Designed day-one support for Apple Watch 1.0 in 3 months, 96% CSAT at launch",
+          "Deployed real-time video/screen sharing/chatbot across 5 global contact centers, 2,000+ agents",
+          "Launched support solutions for iPad Pro, Apple Watch, iPhone 6S/7, macOS El Capitan/Sierra"
         ]
       },
       {
@@ -373,8 +467,17 @@
         "dates": "Sep 2013 – Oct 2015",
         "highlights": [
           "Managed Google-Walmart partnership: 10,000+ daily product listing ads, $10M+/month revenue",
-          "Led complete operational overhaul with custom software toolset"
+          "Led complete operational overhaul with custom software toolset",
+          "Presented Google/YouTube technologies at trade shows as technical evangelist"
         ]
+      }
+    ],
+    "board_experience": [
+      {
+        "role": "Executive Board Member",
+        "organization": "EarthCorps",
+        "dates": "Sep 2022 – Feb 2025",
+        "notes": "Non-profit environmental restoration. Demonstrates executive governance experience."
       }
     ]
   },
@@ -392,9 +495,15 @@
     "max_direct_reports": 33,
     "max_cross_functional_team": 21,
     "apple_watch_csat": "96%",
-    "google_walmart_monthly_revenue": "$10M+"
+    "google_walmart_monthly_revenue": "$10M+",
+    "custom_dashboards_month_one": "100+",
+    "weekly_overhead_eliminated": "3,000 hours",
+    "product_teams_ai_enabled": "20+",
+    "support_agents_equipped": "2,000+",
+    "data_sources_classified": "29+",
+    "uar_applications_managed": 56
   },
-  "resume_context": "Michael Adam Winters is a Senior Technical Product Leader with 15+ years at Amazon (6 years), Apple, Google, and Chewy. At Chewy (Associate Director), he built the first automated compliance analytics platform, led PCI DSS 4.0 readiness across 3 entities (50% audit cycle reduction), operationalized CCPA/DSAR at enterprise scale (2-3K requests bi-weekly, 4-day completion vs 45-day SLA), directed 'Chewy Heartbeat' analytics dashboard for executive visibility, designed AI/LLM enablement for 20+ product teams, and managed 13 global reports. At Amazon, he led a 21-person CV/ML team deploying defect detection across 300+ fulfillment centers (11% defect reduction), re-architected the largest operational metrics platform (30K daily users, 97% page load improvement), built custom dashboard generators eliminating 3,000 hrs/week overhead, drove $32M cost avoidance, managed 3 managers + 30 ICs, and created Project Kariba ($293M supply chain savings). At Apple, he designed day-one Apple Watch 1.0 support (96% CSAT) and deployed video/chatbot tools across 5 global centers for 2,000+ agents. At Google, he managed the Walmart partnership ($10M+/month, 10K+ daily product ads). He founded Winters Product Group providing fractional product leadership and built VetReady, an AI-powered health platform using React/Supabase/Stripe/Vercel/Claude API. Core strengths: data-driven product strategy, platform modernization, compliance/GRC (PCI DSS, CCPA, BigID, SailPoint), AI/ML integration, analytics instrumentation, cross-functional leadership at scale, and transforming organizations from reactive to outcome-driven.",
+  "resume_context": "Michael Adam Winters is a Senior Technical Product Leader with 15+ years at Amazon (6 years across 4 roles), Apple (1.5 years + 3 years retail), Google (2 years), and Chewy (2.5 years). Non-traditional background (Music Business degree from Full Sail University) — rose through Apple Retail to Google to Amazon to Chewy through demonstrated impact, not pedigree. Executive Board Member at EarthCorps (non-profit, 2022-2025). Currently runs Winters Product Group providing fractional product leadership and built VetReady, an AI-powered health platform (React/Supabase/Stripe/Vercel/Claude API). At Chewy (Associate Director of Technical Product), he built the first automated compliance analytics platform, led PCI DSS 4.0 readiness across 3 entities (50% audit cycle reduction), operationalized CCPA/DSAR at enterprise scale (2-3K requests bi-weekly, 4-day completion vs 45-day SLA), deployed BigID data classification across 29+ data sources, managed 56-application User Access Review via SailPoint, directed 'Chewy Heartbeat' analytics dashboard for executive visibility, designed AI/LLM enablement for 20+ product teams, and managed 13 global reports (mentored 20% to promotion, turned around 30% underperformers). At Amazon, he led a 21-person CV/ML team deploying defect detection across 300+ fulfillment centers (11% defect reduction), re-architected the largest operational metrics platform (30K daily users, 97% page load improvement from 3 min to 5 sec), built custom dashboard generators eliminating 3,000 hrs/week overhead across 300 sites, drove $32M cost avoidance, managed 3 managers + 30 ICs (4 promotions), and created Project Kariba — a zero-to-one upstream fulfillment model that avoided $293M in supply chain costs over 3 years. Also launched 7 3PL solutions ($50M+ NPV) and led a 5-day pandemic-response tooling turnaround. At Apple, he designed day-one Apple Watch 1.0 support capability in 3 months (96% CSAT) and deployed video/chatbot tools across 5 global centers for 2,000+ agents. At Google, he managed the Walmart partnership ($10M+/month revenue, 10K+ daily product listing ads) and led a complete operational overhaul. Core strengths: transforming orgs from reactive to data-driven, building platforms at scale, compliance/GRC (PCI DSS, CCPA, BigID, SailPoint), AI/ML integration, supply chain optimization, cross-functional leadership, and delivering measurable business impact ($325M+ career total).",
   "preferences": {
     "work_arrangement": [
       "remote",

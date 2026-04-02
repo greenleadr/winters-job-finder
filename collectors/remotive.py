@@ -26,6 +26,9 @@ _SENIOR_TITLE_RE = re.compile(
     r"associate\s+director|"
     r"senior\s+manager|"
     r"group\s+product\s+manager|"
+    r"principal\s+product\s+manager|"
+    r"staff\s+product\s+manager|"
+    r"senior\s+product\s+manager|"
     r"chief\s+product"
     r")\b",
     re.I,

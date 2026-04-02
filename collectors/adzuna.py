@@ -29,6 +29,10 @@ SEARCH_TITLES = [
     "Senior Manager Product",
     "Associate Director Product",
     "Group Product Manager",
+    "Principal Product Manager",
+    "Director Product Management",
+    "Director Technical Product",
+    "Senior Product Manager",
 ]
 
 LOCATIONS = ["Seattle", "Remote"]
