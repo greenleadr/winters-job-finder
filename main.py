@@ -48,6 +48,7 @@ _COLLECTORS: list[tuple[str, str]] = [
     ("adzuna", "collectors.adzuna"),
     ("career_pages", "collectors.career_pages"),
     ("remotive", "collectors.remotive"),
+    ("hn_hiring", "collectors.hn_hiring"),
 ]
 
 # Seattle metro area patterns for location filtering

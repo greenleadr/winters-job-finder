@@ -2,7 +2,7 @@
 
 > Last updated: 2026-04-01
 
-## Current Iteration: v0.9
+## Current Iteration: v1.0
 
 ### What Works
 - **Career pages collector**: Queries Greenhouse, Lever, and Ashby public JSON APIs for all 76 supported companies (85 total minus 8 Workday + 1 Rippling). Filters to product-leadership titles. Returns full job descriptions for better scoring.
@@ -40,7 +40,8 @@
 |-----------|--------|-------|
 | `profile.json` | Done | 14 target titles, 44 skills + 40 variant groups, 7 roles, 20 key metrics, 2.4K resume context, board experience |
 | `companies.json` | Done | 85 companies, 5 ATS types, verified URLs |
-| `collectors/adzuna.py` | Done | 8 title queries x 2 locations (Seattle + Remote), rate limiting, retry |
+| `collectors/hn_hiring.py` | Done | Monthly HN 'Who is Hiring' thread via Algolia API. Title filter. |
+| `collectors/adzuna.py` | Done | 12 title queries x 3 locations (Seattle + Remote + Whidbey), rate limiting |
 | `collectors/remotive.py` | Done | Title filter regex, HTML stripping |
 | `collectors/career_pages.py` | Done | Greenhouse, Lever, Ashby public JSON APIs. 76 companies. Title filter. |
 | `scorer.py` | Done | 5 scoring dimensions, batch scoring, demo |
@@ -81,12 +82,13 @@
 - **Dealbreakers**: Hands-on coding, CS degree required, junior scope, short contract, unpaid
 
 ## Companies Breakdown
-- **Total**: 85
-- **Greenhouse**: 53
-- **Ashby**: 13
-- **Lever**: 10
-- **Workday**: 8
+- **Total**: 136
+- **Greenhouse**: 90
+- **Ashby**: 23
+- **Lever**: 12
+- **Workday**: 9
 - **Rippling**: 1
+- **iCIMS**: 1
 
 ### By Category
 - Seattle/PNW (14): Zillow, Redfin, Expedia, T-Mobile, Nordstrom, Smartsheet, Qualtrics, Outreach, Highspot, Rover, OfferUp, Remitly, F5, Twitch

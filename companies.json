@@ -560,13 +560,6 @@
     "notes": "Data integration SaaS. Analytics infrastructure. Data pipeline fit."
   },
   {
-    "name": "Navan",
-    "ats_type": "greenhouse",
-    "careers_url": "https://navan.com/careers",
-    "location": "Remote / Hybrid",
-    "notes": "Travel/expense management SaaS. Enterprise. High growth."
-  },
-  {
     "name": "Toast",
     "ats_type": "greenhouse",
     "careers_url": "https://careers.toasttab.com/jobs/search",
@@ -607,5 +600,355 @@
     "careers_url": "https://boeing.wd1.myworkdayjobs.com/external_careers",
     "location": "Seattle, WA / Everett, WA",
     "notes": "Aerospace/defense. Major PNW employer. 65+ countries."
+  },
+  {
+    "name": "Pendo",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/pendo",
+    "location": "Remote / Hybrid",
+    "notes": "Product analytics + in-app guidance SaaS. Direct analytics/instrumentation fit."
+  },
+  {
+    "name": "Contentful",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/contentful",
+    "location": "Remote",
+    "notes": "Headless CMS / digital experience platform. Enterprise SaaS."
+  },
+  {
+    "name": "Hightouch",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/hightouch",
+    "location": "Remote",
+    "notes": "Reverse ETL / data activation SaaS. Modern data stack. AI platform."
+  },
+  {
+    "name": "Anduril",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/andurilindustries",
+    "location": "Seattle, WA / Remote",
+    "notes": "Defense tech. AI/ML, computer vision. Seattle office. High growth."
+  },
+  {
+    "name": "Headspace",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/hs",
+    "location": "Remote",
+    "notes": "Mental health / digital health SaaS. B2B + B2C."
+  },
+  {
+    "name": "ID.me",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/idme",
+    "location": "Remote",
+    "notes": "Digital identity verification platform. Compliance/security focus."
+  },
+  {
+    "name": "WorkOS",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/workos",
+    "location": "Remote",
+    "notes": "Enterprise auth/identity SaaS for developers. Fully distributed."
+  },
+  {
+    "name": "HighLevel",
+    "ats_type": "lever",
+    "careers_url": "https://jobs.lever.co/gohighlevel",
+    "location": "Remote",
+    "notes": "All-in-one SaaS marketing platform. High growth."
+  },
+  {
+    "name": "Kraken",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/kraken.com",
+    "location": "Remote",
+    "notes": "Crypto exchange. Fintech, compliance/regulatory focus."
+  },
+  {
+    "name": "CoinTracker",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/cointracker",
+    "location": "Remote",
+    "notes": "Crypto tax/portfolio SaaS. Fintech, compliance."
+  },
+  {
+    "name": "Mercury",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/mercury",
+    "location": "Remote",
+    "notes": "Business banking fintech. Product-led growth."
+  },
+  {
+    "name": "Checkout.com",
+    "ats_type": "greenhouse",
+    "careers_url": "https://www.checkout.com/careers",
+    "location": "Remote / Hybrid",
+    "notes": "Payments infrastructure fintech. Enterprise, global."
+  },
+  {
+    "name": "Insider",
+    "ats_type": "lever",
+    "careers_url": "https://jobs.lever.co/useinsider",
+    "location": "Remote / Hybrid",
+    "notes": "B2B SaaS customer engagement. #1 G2 leader in CDP, personalization."
+  },
+  {
+    "name": "Coalition",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/coalition",
+    "location": "Remote",
+    "notes": "Cyber insurance SaaS. Security, compliance, GRC alignment."
+  },
+  {
+    "name": "Gainsight",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/gainsight",
+    "location": "Remote / Hybrid",
+    "notes": "Customer success platform SaaS. Enterprise, analytics."
+  },
+  {
+    "name": "Mixpanel",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/mixpanel",
+    "location": "Remote",
+    "notes": "Product analytics SaaS. Event-based analytics. Instrumentation fit."
+  },
+  {
+    "name": "Heap",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/heap",
+    "location": "Remote",
+    "notes": "Product analytics SaaS. Auto-capture, session replay. Analytics fit."
+  },
+  {
+    "name": "Freshworks",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/freshworks",
+    "location": "Remote / Hybrid",
+    "notes": "Enterprise SaaS (CRM, ITSM, support). 67K+ customers. NASDAQ listed."
+  },
+  {
+    "name": "Census",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/census",
+    "location": "Remote",
+    "notes": "Reverse ETL / data activation SaaS. Modern data stack."
+  },
+  {
+    "name": "Calm",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/calm",
+    "location": "Remote",
+    "notes": "Mental health / wellness SaaS. B2B + B2C. Consumer product."
+  },
+  {
+    "name": "Hims & Hers",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/himshers",
+    "location": "Remote",
+    "notes": "Telehealth / e-commerce platform. Consumer health. PLG."
+  },
+  {
+    "name": "Lyra Health",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/lyrahealth",
+    "location": "Remote",
+    "notes": "Enterprise mental health platform. B2B SaaS."
+  },
+  {
+    "name": "Ro",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/ro",
+    "location": "Remote / Hybrid",
+    "notes": "Telehealth platform. Consumer health, e-commerce."
+  },
+  {
+    "name": "EvenUp",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/evenup",
+    "location": "Remote",
+    "notes": "AI-powered legal tech SaaS. Fastest-growing vertical SaaS."
+  },
+  {
+    "name": "Palantir",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/palantir",
+    "location": "Seattle, WA / Hybrid",
+    "notes": "Data analytics platform. Enterprise/government. AI/ML."
+  },
+  {
+    "name": "Marqeta",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/marqeta",
+    "location": "Remote",
+    "notes": "Card issuing fintech platform. API-first, enterprise."
+  },
+  {
+    "name": "Expensify",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/expensify",
+    "location": "Remote",
+    "notes": "Expense management SaaS. PLG, SMB + enterprise."
+  },
+  {
+    "name": "Iterable",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/iterable",
+    "location": "Remote",
+    "notes": "Customer engagement / marketing SaaS. Data-driven, enterprise."
+  },
+  {
+    "name": "Brex",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/brex",
+    "location": "Remote / Hybrid",
+    "notes": "Corporate card / spend management fintech. Enterprise."
+  },
+  {
+    "name": "Segment",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/segment",
+    "location": "Remote",
+    "notes": "Customer data platform (Twilio). Analytics infrastructure."
+  },
+  {
+    "name": "LiveRamp",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/liveramp",
+    "location": "Remote / Hybrid",
+    "notes": "Data connectivity platform. Ad tech, analytics, privacy."
+  },
+  {
+    "name": "Whatnot",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/whatnot",
+    "location": "Remote",
+    "notes": "Live shopping e-commerce marketplace. High growth."
+  },
+  {
+    "name": "Cribl",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/criaboratory",
+    "location": "Remote",
+    "notes": "Observability data pipeline SaaS. Data infrastructure."
+  },
+  {
+    "name": "Kong",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/kong",
+    "location": "Remote",
+    "notes": "API gateway / platform SaaS. Developer infrastructure."
+  },
+  {
+    "name": "CircleCI",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/circleci",
+    "location": "Remote",
+    "notes": "CI/CD platform SaaS. Developer tools."
+  },
+  {
+    "name": "BigCommerce",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/bigcommerce",
+    "location": "Remote",
+    "notes": "E-commerce platform SaaS. Direct e-commerce experience fit."
+  },
+  {
+    "name": "Navan",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/navan",
+    "location": "Remote / Hybrid",
+    "notes": "Travel/expense management SaaS. Enterprise. High growth."
+  },
+  {
+    "name": "HashiCorp",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/hashicorp",
+    "location": "Remote",
+    "notes": "Infrastructure automation SaaS (Terraform, Vault). Enterprise."
+  },
+  {
+    "name": "Starburst",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/starburstdata",
+    "location": "Remote",
+    "notes": "Data analytics platform (Trino). Enterprise data access."
+  },
+  {
+    "name": "Monte Carlo",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/montecarlodata",
+    "location": "Remote",
+    "notes": "Data observability SaaS. Data quality, analytics infrastructure."
+  },
+  {
+    "name": "Writer",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/writer",
+    "location": "Remote",
+    "notes": "Enterprise AI writing/generative platform. GenAI product."
+  },
+  {
+    "name": "Cohere",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/cohere",
+    "location": "Remote / Hybrid",
+    "notes": "Enterprise AI/LLM platform. Foundation models."
+  },
+  {
+    "name": "Anthropic",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/anthropic",
+    "location": "Seattle, WA / Remote",
+    "notes": "AI safety / Claude. Seattle office. AI/ML focus."
+  },
+  {
+    "name": "Perplexity",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/perplexity.ai",
+    "location": "Remote / Hybrid",
+    "notes": "AI search engine. High growth. AI product."
+  },
+  {
+    "name": "Cursor",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/anysphere",
+    "location": "Remote",
+    "notes": "AI code editor. Developer tools. Fastest-growing AI startup."
+  },
+  {
+    "name": "Convex",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/convex",
+    "location": "Remote",
+    "notes": "Reactive backend platform. Developer tools."
+  },
+  {
+    "name": "Render",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/render",
+    "location": "Remote",
+    "notes": "Cloud platform for developers. Infrastructure SaaS."
+  },
+  {
+    "name": "Zip",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/zipco",
+    "location": "Remote",
+    "notes": "Procurement/intake SaaS. Enterprise spend management."
+  },
+  {
+    "name": "Persona",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/persona",
+    "location": "Remote",
+    "notes": "Identity verification platform. Compliance, KYC."
+  },
+  {
+    "name": "Replit",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/replit",
+    "location": "Remote",
+    "notes": "AI-powered coding platform. Developer tools, AI."
   }
 ]
