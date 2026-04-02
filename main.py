@@ -241,6 +241,18 @@ def run() -> None:
     if closed_count:
         print(f"Marked {closed_count} jobs as closed", file=sys.stderr)
 
+    # 9c. Generate dashboard
+    try:
+        from dashboard import generate_dashboard
+        from pathlib import Path
+        docs_dir = Path(__file__).resolve().parent / "docs"
+        docs_dir.mkdir(exist_ok=True)
+        html = generate_dashboard(conn)
+        (docs_dir / "index.html").write_text(html)
+        print(f"Dashboard written to docs/index.html", file=sys.stderr)
+    except Exception as exc:
+        print(f"Dashboard generation failed: {exc}", file=sys.stderr)
+
     conn.close()
 
     # 10. Summary

@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   run-pipeline:
@@ -38,13 +40,14 @@ jobs:
           USE_LLM_SCORING: ${{ secrets.ANTHROPIC_API_KEY && 'true' || 'false' }}
         run: python main.py
 
-      - name: Commit jobs database
+      - name: Commit jobs database and dashboard
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add --force data/jobs.db
-          git diff --cached --quiet && echo "No DB changes to commit" || \
-            git commit -m "chore: update jobs.db [skip ci]" && git push
+          git add docs/index.html 2>/dev/null || true
+          git diff --cached --quiet && echo "No changes to commit" || \
+            git commit -m "chore: update jobs.db and dashboard [skip ci]" && git push
 
       - name: Upload output artifacts
         if: always()
@@ -54,3 +57,32 @@ jobs:
           path: output/
           if-no-files-found: ignore
           retention-days: 14
+
+  deploy-pages:
+    needs: run-pipeline
+    runs-on: ubuntu-latest
+    if: always()
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Pull latest (includes dashboard commit)
+        run: git pull origin ${{ github.ref_name }} || true
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
