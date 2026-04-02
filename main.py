@@ -275,8 +275,11 @@ def run() -> None:
     db.save_jobs(conn, scored)
 
     # 9b. Detect closed jobs (no longer in current collection)
-    current_urls = {j.get("url", "") for j in raw_jobs if j.get("url")}
-    closed_count = db.mark_closed(conn, current_urls)
+    current_keys = {
+        f"{j.get('title', '').lower().strip()}|{j.get('company', '').lower().strip()}"
+        for j in raw_jobs
+    }
+    closed_count = db.mark_closed(conn, current_keys)
     if closed_count:
         print(f"Marked {closed_count} jobs as closed", file=sys.stderr)
 

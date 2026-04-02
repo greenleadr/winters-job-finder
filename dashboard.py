@@ -202,8 +202,15 @@ def generate_dashboard(conn: sqlite3.Connection, run_date: date | None = None) -
     top_companies = sorted(companies.items(), key=lambda x: -x[1])[:10]
     max_company = top_companies[0][1] if top_companies else 1
 
-    # Build sections
-    top_jobs = sorted(all_7d, key=lambda j: -(j.get("score") or 0))[:20]
+    # Build sections — deduplicate by title+company for display
+    seen_keys: set[str] = set()
+    unique_jobs: list[dict[str, Any]] = []
+    for j in sorted(all_7d, key=lambda j: -(j.get("score") or 0)):
+        key = f"{(j.get('title') or '').lower()}|{(j.get('company') or '').lower()}"
+        if key not in seen_keys:
+            seen_keys.add(key)
+            unique_jobs.append(j)
+    top_jobs = unique_jobs[:20]
     top_rows = "\n".join(_render_job_row(j) for j in top_jobs)
 
     source_chart = "\n".join(

@@ -152,24 +152,28 @@ def save_jobs(
 
 def mark_closed(
     conn: sqlite3.Connection,
-    current_urls: set[str],
+    current_titles_companies: set[str],
     max_age_days: int = 7,
 ) -> int:
-    """Mark jobs as 'closed' if they were seen recently but are no longer
-    in the current collection.  Only considers jobs first seen within
-    *max_age_days* to avoid marking ancient jobs.
+    """Mark jobs as 'closed' if their title+company combo is no longer
+    in the current collection.  Uses title+company instead of URL to
+    avoid false positives from Greenhouse multi-location variants.
+
+    *current_titles_companies* should be a set of "title|company" strings
+    (lowercased).
 
     Returns the number of jobs marked closed.
     """
     cutoff = (datetime.now(timezone.utc) - timedelta(days=max_age_days)).isoformat()
     rows = conn.execute(
-        "SELECT id, url FROM jobs WHERE status = 'open' AND first_seen >= ?",
+        "SELECT id, title, company FROM jobs WHERE status = 'open' AND first_seen >= ?",
         (cutoff,),
     ).fetchall()
 
     closed = 0
     for row in rows:
-        if row["url"] and row["url"] not in current_urls:
+        key = f"{(row['title'] or '').lower().strip()}|{(row['company'] or '').lower().strip()}"
+        if key not in current_titles_companies:
             conn.execute(
                 "UPDATE jobs SET status = 'closed' WHERE id = ?", (row["id"],)
             )
