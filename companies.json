@@ -593,5 +593,19 @@
     "careers_url": "https://job-boards.greenhouse.io/abnormalsecurity",
     "location": "Remote / Hybrid",
     "notes": "AI-native email security SaaS. Enterprise, compliance."
+  },
+  {
+    "name": "Alaska Airlines",
+    "ats_type": "icims",
+    "careers_url": "https://careers.alaskaair.com/jobs/",
+    "location": "Seattle, WA",
+    "notes": "Alaska Air Group (Alaska, Hawaiian, Horizon). Seattle HQ. Major PNW employer."
+  },
+  {
+    "name": "Boeing",
+    "ats_type": "workday",
+    "careers_url": "https://boeing.wd1.myworkdayjobs.com/external_careers",
+    "location": "Seattle, WA / Everett, WA",
+    "notes": "Aerospace/defense. Major PNW employer. 65+ countries."
   }
 ]

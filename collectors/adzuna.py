@@ -35,7 +35,7 @@ SEARCH_TITLES = [
     "Senior Product Manager",
 ]
 
-LOCATIONS = ["Seattle", "Remote"]
+LOCATIONS = ["Seattle", "Remote", "Whidbey Island"]
 RESULTS_PER_PAGE = 50
 MAX_PAGES = 5
 REQUEST_DELAY_SECONDS = 1.0
@@ -99,7 +99,8 @@ def _is_remote_or_seattle(result: dict[str, Any]) -> bool:
     title = result.get("title", "").lower()
     description = (result.get("description", "") or "").lower()
 
-    if "seattle" in location_name or "bellevue" in location_name or "redmond" in location_name:
+    pnw_signals = ["seattle", "bellevue", "redmond", "whidbey", "oak harbor", "everett"]
+    if any(s in location_name for s in pnw_signals):
         return True
 
     remote_signals = ["remote", "work from home", "anywhere"]

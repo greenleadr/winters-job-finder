@@ -51,7 +51,8 @@ _COLLECTORS: list[tuple[str, str]] = [
 # Seattle metro area patterns for location filtering
 _SEATTLE_METRO_RE = re.compile(
     r"\b(seattle|bellevue|redmond|kirkland|tacoma|renton|kent|bothell"
-    r"|woodinville|issaquah|sammamish|mercer\s+island)\b",
+    r"|woodinville|issaquah|sammamish|mercer\s+island"
+    r"|whidbey|oak\s+harbor|everett)\b",
     re.I,
 )
 _REMOTE_RE = re.compile(
