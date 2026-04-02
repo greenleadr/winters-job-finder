@@ -290,6 +290,45 @@ def _score_penalties(
 
 
 # ---------------------------------------------------------------------------
+# 6. Salary extraction
+# ---------------------------------------------------------------------------
+
+# Matches: $150,000 - $200,000 / $150K-$200K / 150,000-200,000 USD
+_SALARY_RE = re.compile(
+    r"\$?\s*(\d{2,3})[,.]?(\d{3})?\s*[kK]?\s*"
+    r"[\-–—to]+\s*"
+    r"\$?\s*(\d{2,3})[,.]?(\d{3})?\s*[kK]?",
+)
+
+
+def _extract_salary(text: str) -> tuple[int | None, int | None]:
+    """Extract salary min/max from job description text.
+
+    Returns (min_salary, max_salary) as integers, or (None, None).
+    """
+    for m in _SALARY_RE.finditer(text):
+        lo_major, lo_minor = m.group(1), m.group(2)
+        hi_major, hi_minor = m.group(3), m.group(4)
+
+        # Build the numbers
+        if lo_minor:
+            lo = int(lo_major) * 1000 + int(lo_minor)
+        else:
+            lo = int(lo_major) * 1000  # e.g., "150" → 150,000 (assumes K)
+
+        if hi_minor:
+            hi = int(hi_major) * 1000 + int(hi_minor)
+        else:
+            hi = int(hi_major) * 1000
+
+        # Sanity check: must look like a reasonable annual salary
+        if 30_000 <= lo <= 1_000_000 and 30_000 <= hi <= 1_000_000 and lo <= hi:
+            return lo, hi
+
+    return None, None
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -345,6 +384,9 @@ def score_job(
 
     final = max(raw + penalty + company_boost + desc_boost, 0)
 
+    # Extract salary
+    salary_min, salary_max = _extract_salary(desc)
+
     return {
         "score": final,
         "breakdown": {
@@ -359,6 +401,8 @@ def score_job(
         "matched_skills": matched_skills,
         "gaps": gaps,
         "flags": flags,
+        "salary_min": salary_min,
+        "salary_max": salary_max,
     }
 
 

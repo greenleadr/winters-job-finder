@@ -15,6 +15,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 _DB_DIR = Path(__file__).resolve().parent / "data"
 _DB_PATH = _DB_DIR / "jobs.db"
@@ -28,9 +29,31 @@ def _connect(db_path: str | Path | None = None) -> sqlite3.Connection:
     return conn
 
 
+# Tracking query params to strip before dedup hashing
+_TRACKING_PARAMS = {
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "fbclid", "gclid", "gbraid", "wbraid", "msclkid",
+    "trk", "ref", "referer", "source", "si", "mc_cid", "mc_eid",
+    "gh_jid", "gh_src", "lever-via", "lever-source", "lever-origin",
+}
+
+
+def _normalize_url(url: str) -> str:
+    """Strip tracking/referral query params from a URL for consistent dedup."""
+    try:
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query, keep_blank_values=False)
+        cleaned = {k: v for k, v in params.items() if k.lower() not in _TRACKING_PARAMS}
+        new_query = urlencode(cleaned, doseq=True) if cleaned else ""
+        return urlunparse(parsed._replace(query=new_query, fragment=""))
+    except Exception:
+        return url
+
+
 def job_id(title: str, company: str, url: str) -> str:
-    """Deterministic ID: SHA-256 of title|company|url (lowercased)."""
-    raw = f"{title.lower().strip()}|{company.lower().strip()}|{url.lower().strip()}"
+    """Deterministic ID: SHA-256 of title|company|normalized_url (lowercased)."""
+    clean_url = _normalize_url(url).lower().strip()
+    raw = f"{title.lower().strip()}|{company.lower().strip()}|{clean_url}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
@@ -53,7 +76,15 @@ CREATE TABLE IF NOT EXISTS jobs (
     flags       TEXT,
     first_seen  TEXT NOT NULL,
     last_seen   TEXT NOT NULL,
-    status      TEXT NOT NULL DEFAULT 'open'
+    status      TEXT NOT NULL DEFAULT 'open',
+    salary_min  INTEGER,
+    salary_max  INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS llm_cache (
+    job_id   TEXT PRIMARY KEY,
+    response TEXT NOT NULL,
+    created  TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_jobs_first_seen ON jobs(first_seen);
@@ -62,6 +93,8 @@ CREATE INDEX IF NOT EXISTS idx_jobs_score      ON jobs(score);
 
 _MIGRATIONS = [
     "ALTER TABLE jobs ADD COLUMN status TEXT NOT NULL DEFAULT 'open'",
+    "ALTER TABLE jobs ADD COLUMN salary_min INTEGER",
+    "ALTER TABLE jobs ADD COLUMN salary_max INTEGER",
 ]
 
 
@@ -107,14 +140,19 @@ def save_jobs(
         matched_json = json.dumps(score_data.get("matched_skills", []))
         flags_json = json.dumps(score_data.get("flags", []))
         score_val = score_data.get("score")
+        salary_min = score_data.get("salary_min")
+        salary_max = score_data.get("salary_max")
 
         existing = conn.execute("SELECT 1 FROM jobs WHERE id = ?", (jid,)).fetchone()
         if existing:
             # Only update score if we have a real one (don't overwrite with None)
             if score_val is not None:
                 conn.execute(
-                    "UPDATE jobs SET last_seen = ?, score = ?, matched_skills = ?, flags = ? WHERE id = ?",
-                    (now, score_val, matched_json, flags_json, jid),
+                    "UPDATE jobs SET last_seen = ?, score = ?, matched_skills = ?, "
+                    "flags = ?, salary_min = COALESCE(?, salary_min), "
+                    "salary_max = COALESCE(?, salary_max) WHERE id = ?",
+                    (now, score_val, matched_json, flags_json,
+                     salary_min, salary_max, jid),
                 )
             else:
                 conn.execute(
@@ -126,8 +164,8 @@ def save_jobs(
                 """INSERT INTO jobs
                    (id, title, company, location, url, description,
                     source, date_posted, score, matched_skills, flags,
-                    first_seen, last_seen)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    first_seen, last_seen, salary_min, salary_max)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     jid,
                     job.get("title", ""),
@@ -142,6 +180,8 @@ def save_jobs(
                     flags_json,
                     now,
                     now,
+                    salary_min,
+                    salary_max,
                 ),
             )
             inserted += 1
@@ -274,6 +314,38 @@ def get_application_funnel(conn: sqlite3.Connection) -> dict[str, int]:
     ).fetchall()
     return {row["status"]: row["cnt"] for row in rows}
 
+
+# ---------------------------------------------------------------------------
+# LLM Cache
+# ---------------------------------------------------------------------------
+
+def get_llm_cache(conn: sqlite3.Connection, jid: str) -> dict[str, Any] | None:
+    """Return cached LLM response for a job, or None if not cached."""
+    row = conn.execute(
+        "SELECT response FROM llm_cache WHERE job_id = ?", (jid,)
+    ).fetchone()
+    if row:
+        try:
+            return json.loads(row["response"])
+        except (json.JSONDecodeError, TypeError):
+            return None
+    return None
+
+
+def set_llm_cache(conn: sqlite3.Connection, jid: str, response: dict[str, Any]) -> None:
+    """Cache an LLM response for a job."""
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO llm_cache (job_id, response, created) VALUES (?, ?, ?) "
+        "ON CONFLICT(job_id) DO UPDATE SET response = ?, created = ?",
+        (jid, json.dumps(response), now, json.dumps(response), now),
+    )
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Unscored backfill
+# ---------------------------------------------------------------------------
 
 def get_unscored_jobs(
     conn: sqlite3.Connection,

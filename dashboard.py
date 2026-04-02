@@ -113,11 +113,22 @@ def _render_job_row(job: dict[str, Any]) -> str:
     first_seen = job.get("first_seen", "")[:10]
     flags_div = f'<div style="margin-top:4px;">{flags_html}</div>' if flags_html else ""
 
+    # Salary badge
+    s_min = job.get("salary_min")
+    s_max = job.get("salary_max")
+    salary_badge = ""
+    if s_min and s_max:
+        salary_badge = (
+            f'<span style="background:#065f46;color:#6ee7b7;font-size:10px;'
+            f'font-weight:600;padding:2px 7px;border-radius:8px;margin-left:8px;">'
+            f'${s_min // 1000}K–${s_max // 1000}K</span>'
+        )
+
     return (
         f'<tr style="border-bottom:1px solid #1e293b;">'
         f'<td style="padding:12px 16px;vertical-align:top;">'
         f'<div><a href="{url}" target="_blank" style="color:#60a5fa;font-size:14px;'
-        f'font-weight:600;text-decoration:none;">{title}</a></div>'
+        f'font-weight:600;text-decoration:none;">{title}</a>{salary_badge}</div>'
         f'<div style="color:#94a3b8;font-size:13px;">{company}'
         f'<span style="color:#64748b;margin-left:8px;">{location}</span></div>'
         f'<div style="margin-top:4px;">{skills_html}</div>'

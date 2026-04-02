@@ -71,12 +71,29 @@ def _render_job_row(job: dict[str, Any], rank: int) -> str:
     url = _esc(job.get("url", "#"))
     source = _esc(job.get("source", ""))
     date_posted = _esc(job.get("date_posted", ""))
+    salary_min = s.get("salary_min")
+    salary_max = s.get("salary_max")
 
     skills_html = " ".join(_skill_pill(sk) for sk in matched[:8])
     if len(matched) > 8:
         skills_html += f' <span style="color:#64748b;font-size:12px;">+{len(matched) - 8} more</span>'
 
     flags_html = " ".join(_flag_pill(f) for f in flags) if flags else ""
+
+    # Salary badge
+    salary_html = ""
+    if salary_min and salary_max:
+        salary_html = (
+            f'<span style="display:inline-block;background:#059669;color:#fff;'
+            f'font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;'
+            f'margin-right:6px;">${salary_min // 1000}K–${salary_max // 1000}K</span>'
+        )
+    elif salary_min:
+        salary_html = (
+            f'<span style="display:inline-block;background:#059669;color:#fff;'
+            f'font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;'
+            f'margin-right:6px;">${salary_min // 1000}K+</span>'
+        )
 
     meta_parts = [location]
     if source:
@@ -135,7 +152,7 @@ def _render_job_row(job: dict[str, Any], rank: int) -> str:
                                   text-decoration:none;">{title}</a>
           <span style="color:#475569;font-size:14px;margin-left:8px;">{company}</span>
         </div>
-        <div style="margin-bottom:6px;">{_score_bar(score)}</div>
+        <div style="margin-bottom:6px;">{_score_bar(score)} {salary_html}</div>
         <div style="color:#64748b;font-size:13px;margin-bottom:6px;">{meta}</div>
         <div style="margin-bottom:4px;">{skills_html}</div>
         {f'<div style="margin-top:6px;">{flags_html}</div>' if flags_html else ''}

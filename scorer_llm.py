@@ -25,6 +25,7 @@ from urllib.request import Request, urlopen
 MODEL = "claude-haiku-4-5-20251001"
 API_URL = "https://api.anthropic.com/v1/messages"
 MAX_DESC_CHARS = 3000  # truncate long descriptions to manage token cost
+MAX_TOKENS = 500       # response token limit (expanded for metadata fields)
 REQUEST_DELAY = 1.0    # seconds between API calls
 
 
@@ -85,7 +86,11 @@ def _build_prompt(job: dict[str, Any], profile: dict[str, Any]) -> str:
         f"--- INSTRUCTIONS ---\n"
         f"Respond in this exact JSON format (no markdown, no code fences):\n"
         f'{{"llm_score": <1-10>, "strengths": ["...", "...", "..."], '
-        f'"concerns": ["...", "...", "..."], "recommendation": "Apply|Maybe|Skip"}}'
+        f'"concerns": ["...", "...", "..."], "recommendation": "Apply|Maybe|Skip", '
+        f'"salary_range": "$150K-$200K or null if not mentioned", '
+        f'"team_size": "10-15 or null if not mentioned", '
+        f'"reports_to": "VP Engineering or null if not mentioned", '
+        f'"role_type": "manager|executive|IC"}}'
     )
 
 
@@ -93,7 +98,7 @@ def _call_claude(prompt: str, api_key: str, retries: int = 2) -> dict[str, Any] 
     """Call the Claude API and parse the JSON response."""
     body = json.dumps({
         "model": MODEL,
-        "max_tokens": 400,
+        "max_tokens": MAX_TOKENS,
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
 
@@ -151,24 +156,46 @@ def score_job_llm(
     job: dict[str, Any],
     profile: dict[str, Any],
     api_key: str | None = None,
+    db_conn: Any = None,
 ) -> dict[str, Any] | None:
-    """Score a single job with Claude. Returns the LLM result dict or None."""
+    """Score a single job with Claude. Returns the LLM result dict or None.
+
+    If *db_conn* is provided, checks the LLM cache first and skips the
+    API call if a cached response exists.
+    """
     if api_key is None:
         api_key = _get_api_key()
 
+    # Check cache
+    if db_conn is not None:
+        from db import job_id as make_jid, get_llm_cache, set_llm_cache
+        jid = make_jid(
+            job.get("title", ""), job.get("company", ""), job.get("url", "")
+        )
+        cached = get_llm_cache(db_conn, jid)
+        if cached:
+            return cached
+
     prompt = _build_prompt(job, profile)
-    return _call_claude(prompt, api_key)
+    result = _call_claude(prompt, api_key)
+
+    # Store in cache
+    if result and db_conn is not None:
+        set_llm_cache(db_conn, jid, result)
+
+    return result
 
 
 def score_jobs_llm(
     jobs: list[dict[str, Any]],
     profile: dict[str, Any],
     threshold: int = 50,
+    db_conn: Any = None,
 ) -> list[dict[str, Any]]:
     """LLM-score jobs above *threshold* and merge results into _score.
 
     Jobs below threshold are returned unchanged. Jobs that fail the API
-    call are also returned unchanged.
+    call are also returned unchanged. Cached responses are reused.
     """
     api_key = _get_api_key()
 
@@ -178,21 +205,33 @@ def score_jobs_llm(
         file=sys.stderr,
     )
 
+    cached_count = 0
     for i, job in enumerate(eligible):
         title = job.get("title", "?")
         company = job.get("company", "?")
         print(f"  [{i+1}/{len(eligible)}] {title} @ {company} …", file=sys.stderr, end=" ")
 
-        result = score_job_llm(job, profile, api_key)
+        result = score_job_llm(job, profile, api_key, db_conn=db_conn)
         if result:
             job.setdefault("_score", {})["llm"] = result
             rec = result.get("recommendation", "?")
             llm_score = result.get("llm_score", "?")
+            # Check if it came from cache (no delay needed)
+            from db import job_id as make_jid, get_llm_cache
+            if db_conn and get_llm_cache(db_conn, make_jid(
+                job.get("title", ""), job.get("company", ""), job.get("url", "")
+            )):
+                cached_count += 1
+                print(f"score={llm_score}, rec={rec} (cached)", file=sys.stderr)
+                continue
             print(f"score={llm_score}, rec={rec}", file=sys.stderr)
         else:
             print("failed", file=sys.stderr)
 
         time.sleep(REQUEST_DELAY)
+
+    if cached_count:
+        print(f"  {cached_count} results from cache (saved API calls)", file=sys.stderr)
 
     # Re-sort: boost jobs with Apply recommendation
     def _sort_key(j: dict[str, Any]) -> tuple[int, int]:

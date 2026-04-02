@@ -184,11 +184,12 @@ def _matches_location(job: dict[str, Any]) -> bool:
 # 6. LLM scoring stub
 # ---------------------------------------------------------------------------
 
-def _llm_rescore(jobs: list[dict[str, Any]], profile: dict[str, Any]) -> list[dict[str, Any]]:
-    """Run LLM re-scoring on jobs with Tier 1 score >= 50."""
+def _llm_rescore(jobs: list[dict[str, Any]], profile: dict[str, Any],
+                  conn: Any = None) -> list[dict[str, Any]]:
+    """Run LLM re-scoring on jobs with Tier 1 score >= 60."""
     try:
         from scorer_llm import score_jobs_llm
-        return score_jobs_llm(jobs, profile, threshold=60)
+        return score_jobs_llm(jobs, profile, threshold=60, db_conn=conn)
     except Exception as exc:
         print(f"LLM re-scoring failed: {exc}", file=sys.stderr)
         return jobs
@@ -264,7 +265,7 @@ def run() -> None:
 
     # 6. Optional LLM re-scoring
     if os.environ.get("USE_LLM_SCORING", "").lower() == "true":
-        scored = _llm_rescore(scored, profile)
+        scored = _llm_rescore(scored, profile, conn=conn)
 
     # 7. Build digest (with still-open, long-open, and recently-closed sections)
     today = date.today()
