@@ -222,6 +222,24 @@ def run() -> None:
     scored = score_jobs(filtered, profile)
     print(f"Scored {len(scored)} jobs", file=sys.stderr)
 
+    # 5b. Backfill: re-score any DB jobs that have NULL/0 scores
+    unscored = db.get_unscored_jobs(conn)
+    if unscored:
+        print(f"Backfill scoring {len(unscored)} unscored DB jobs …", file=sys.stderr)
+        from scorer import score_job
+        backfilled = 0
+        for uj in unscored:
+            if not uj.get("description"):
+                continue
+            result = score_job(uj, profile)
+            jid = db.job_id(uj.get("title", ""), uj.get("company", ""), uj.get("url", ""))
+            db.update_score(
+                conn, jid, result["score"],
+                result["matched_skills"], result["flags"],
+            )
+            backfilled += 1
+        print(f"  Backfilled {backfilled} jobs", file=sys.stderr)
+
     # 6. Optional LLM re-scoring
     if os.environ.get("USE_LLM_SCORING", "").lower() == "true":
         scored = _llm_rescore(scored, profile)

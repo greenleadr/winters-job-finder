@@ -208,6 +208,32 @@ def get_closed_jobs(
     return [dict(row) for row in rows]
 
 
+def get_unscored_jobs(
+    conn: sqlite3.Connection,
+) -> list[dict[str, Any]]:
+    """Return jobs that have no score (NULL or 0), for backfill scoring."""
+    rows = conn.execute(
+        "SELECT * FROM jobs WHERE score IS NULL OR score = 0 "
+        "ORDER BY first_seen DESC",
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def update_score(
+    conn: sqlite3.Connection,
+    jid: str,
+    score: int,
+    matched_skills: list[str],
+    flags: list[str],
+) -> None:
+    """Update score fields for a single job by ID."""
+    conn.execute(
+        "UPDATE jobs SET score = ?, matched_skills = ?, flags = ? WHERE id = ?",
+        (score, json.dumps(matched_skills), json.dumps(flags), jid),
+    )
+    conn.commit()
+
+
 def get_history(
     conn: sqlite3.Connection,
     days: int = 7,
