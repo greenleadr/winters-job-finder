@@ -62,6 +62,17 @@ _REMOTE_RE = re.compile(
     r"\b(remote|work\s+from\s+home|distributed|anywhere)\b", re.I,
 )
 
+# Negative keywords — skip jobs containing these terms in title or description
+_NEGATIVE_RE = re.compile(
+    r"\b("
+    r"intern\b|internship|part[- ]time|clearance\s+required|"
+    r"security\s+clearance|ts/sci|polygraph|"
+    r"on[- ]site\s+only|no\s+remote|"
+    r"unpaid|volunteer|equity[- ]only"
+    r")\b",
+    re.I,
+)
+
 
 # ---------------------------------------------------------------------------
 # 1. Profile loading
@@ -154,6 +165,12 @@ def _is_recent(job: dict[str, Any]) -> bool:
         return True  # unparseable date = keep it
 
 
+def _passes_negative_filter(job: dict[str, Any]) -> bool:
+    """Return False if the job contains negative keywords (intern, part-time, etc.)."""
+    text = f"{job.get('title', '')} {(job.get('description', '') or '')[:500]}"
+    return not _NEGATIVE_RE.search(text)
+
+
 def _matches_location(job: dict[str, Any]) -> bool:
     text = " ".join([
         job.get("location", ""),
@@ -212,6 +229,10 @@ def run() -> None:
     filtered = [j for j in new_jobs if _matches_location(j)]
     print(f"After location filter: {len(filtered)}", file=sys.stderr)
 
+    # 4b. Negative keyword filter
+    filtered = [j for j in filtered if _passes_negative_filter(j)]
+    print(f"After negative keyword filter: {len(filtered)}", file=sys.stderr)
+
     if not filtered:
         print("No new jobs after filtering — saving raw and exiting.", file=sys.stderr)
         db.save_jobs(conn, raw_jobs)
@@ -245,16 +266,18 @@ def run() -> None:
     if os.environ.get("USE_LLM_SCORING", "").lower() == "true":
         scored = _llm_rescore(scored, profile)
 
-    # 7. Build digest (with still-open and recently-closed sections)
+    # 7. Build digest (with still-open, long-open, and recently-closed sections)
     today = date.today()
     still_open = db.get_open_jobs(conn, days=7)
     recently_closed = db.get_closed_jobs(conn, days=3)
+    long_open = db.get_long_open_jobs(conn, min_days=7, max_days=30)
     # Exclude today's new jobs from still-open (they're in the main section)
     new_urls = {j.get("url") for j in scored}
     still_open = [j for j in still_open if j.get("url") not in new_urls]
     html_body = generate_digest(
         scored, run_date=today,
         still_open=still_open, recently_closed=recently_closed,
+        long_open=long_open,
     )
 
     # 8. Send email

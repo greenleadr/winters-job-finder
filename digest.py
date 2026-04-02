@@ -193,6 +193,7 @@ def generate_digest(
     run_date: date | None = None,
     still_open: list[dict[str, Any]] | None = None,
     recently_closed: list[dict[str, Any]] | None = None,
+    long_open: list[dict[str, Any]] | None = None,
 ) -> str:
     """Return an HTML email body for the given scored job list.
 
@@ -223,6 +224,9 @@ def generate_digest(
     # Build extra sections
     still_open_html = _render_section(
         "Still Open", still_open or [], icon="&#128994;"
+    )
+    long_open_html = _render_section(
+        "Still Open 7+ Days — Apply Soon", long_open or [], icon="&#11088;"
     )
     closed_html = _render_section(
         "Recently Closed", recently_closed or [], icon="&#128308;"
@@ -280,6 +284,7 @@ def generate_digest(
     </div>
 
     {still_open_html}
+    {long_open_html}
     {closed_html}
 
     <!-- Footer -->

@@ -340,7 +340,10 @@ def score_job(
     if target_companies and company.lower().strip() in target_companies:
         company_boost = 5
 
-    final = max(raw + penalty + company_boost, 0)
+    # Bonus: fuller descriptions are higher-quality postings
+    desc_boost = 3 if len(desc) >= 500 else 0
+
+    final = max(raw + penalty + company_boost + desc_boost, 0)
 
     return {
         "score": final,
@@ -350,6 +353,7 @@ def score_job(
             "experience": exp_pts,
             "industry": ind_pts,
             "company_boost": company_boost,
+            "desc_boost": desc_boost,
             "penalty": penalty,
         },
         "matched_skills": matched_skills,

@@ -198,6 +198,27 @@ def get_open_jobs(
     return [dict(row) for row in rows]
 
 
+def get_long_open_jobs(
+    conn: sqlite3.Connection,
+    min_days: int = 7,
+    max_days: int = 30,
+) -> list[dict[str, Any]]:
+    """Return jobs that have been open for 7+ days — a positive signal.
+
+    These roles haven't been filled yet, so they may be worth applying to.
+    """
+    now = datetime.now(timezone.utc)
+    recent_cutoff = (now - timedelta(days=min_days)).isoformat()
+    old_cutoff = (now - timedelta(days=max_days)).isoformat()
+    rows = conn.execute(
+        "SELECT * FROM jobs WHERE status = 'open' "
+        "AND first_seen < ? AND first_seen >= ? AND (score IS NOT NULL AND score > 0) "
+        "ORDER BY score DESC",
+        (recent_cutoff, old_cutoff),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def get_closed_jobs(
     conn: sqlite3.Connection,
     days: int = 3,
@@ -210,6 +231,48 @@ def get_closed_jobs(
         (cutoff,),
     ).fetchall()
     return [dict(row) for row in rows]
+
+
+_VALID_STATUSES = {"open", "closed", "applied", "interviewing", "rejected", "offer"}
+
+
+def set_status(
+    conn: sqlite3.Connection,
+    jid: str,
+    status: str,
+) -> bool:
+    """Manually set a job's application status.
+
+    Valid statuses: open, closed, applied, interviewing, rejected, offer.
+    Returns True if the job was found and updated.
+    """
+    if status not in _VALID_STATUSES:
+        raise ValueError(f"Invalid status '{status}'. Must be one of: {_VALID_STATUSES}")
+    result = conn.execute(
+        "UPDATE jobs SET status = ? WHERE id = ?", (status, jid)
+    )
+    conn.commit()
+    return result.rowcount > 0
+
+
+def get_jobs_by_status(
+    conn: sqlite3.Connection,
+    status: str,
+) -> list[dict[str, Any]]:
+    """Return all jobs with the given status, sorted by score descending."""
+    rows = conn.execute(
+        "SELECT * FROM jobs WHERE status = ? ORDER BY score DESC",
+        (status,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_application_funnel(conn: sqlite3.Connection) -> dict[str, int]:
+    """Return counts by status for the application funnel."""
+    rows = conn.execute(
+        "SELECT status, COUNT(*) as cnt FROM jobs GROUP BY status"
+    ).fetchall()
+    return {row["status"]: row["cnt"] for row in rows}
 
 
 def get_unscored_jobs(
