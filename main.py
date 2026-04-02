@@ -226,12 +226,13 @@ def run() -> None:
     unscored = db.get_unscored_jobs(conn)
     if unscored:
         print(f"Backfill scoring {len(unscored)} unscored DB jobs …", file=sys.stderr)
-        from scorer import score_job
+        from scorer import score_job, _load_target_companies
+        profile_with_boost = {**profile, "_target_companies": _load_target_companies()}
         backfilled = 0
         for uj in unscored:
             if not uj.get("description"):
                 continue
-            result = score_job(uj, profile)
+            result = score_job(uj, profile_with_boost)
             jid = db.job_id(uj.get("title", ""), uj.get("company", ""), uj.get("url", ""))
             db.update_score(
                 conn, jid, result["score"],
