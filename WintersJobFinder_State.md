@@ -2,7 +2,7 @@
 
 > Last updated: 2026-04-01
 
-## Current Iteration: v0.8
+## Current Iteration: v0.9
 
 ### What Works
 - **Career pages collector**: Queries Greenhouse, Lever, and Ashby public JSON APIs for all 76 supported companies (85 total minus 8 Workday + 1 Rippling). Filters to product-leadership titles. Returns full job descriptions for better scoring.

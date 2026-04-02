@@ -144,15 +144,63 @@ def _render_job_row(job: dict[str, Any], rank: int) -> str:
     </tr>"""
 
 
+def _render_compact_row(job: dict[str, Any]) -> str:
+    """Render a compact row for still-open / recently-closed sections."""
+    title = _esc(job.get("title", "Unknown"))
+    company = _esc(job.get("company", "Unknown"))
+    location = _esc(job.get("location", "—"))
+    url = _esc(job.get("url", "#"))
+    score = job.get("score", 0)
+    bg, label = _score_color(score)
+
+    return (
+        f'<tr style="border-bottom:1px solid #f1f5f9;">'
+        f'<td style="padding:10px 16px;">'
+        f'<a href="{url}" style="color:#1d4ed8;font-size:14px;font-weight:600;'
+        f'text-decoration:none;">{title}</a>'
+        f'<span style="color:#64748b;font-size:13px;margin-left:6px;">{company}</span>'
+        f'<span style="color:#94a3b8;font-size:12px;margin-left:6px;">{location}</span>'
+        f'</td>'
+        f'<td style="padding:10px 16px;text-align:right;">'
+        f'<span style="background:{bg};color:#fff;font-size:11px;font-weight:700;'
+        f'padding:2px 8px;border-radius:8px;">{score}</span>'
+        f'</td></tr>'
+    )
+
+
+def _render_section(title: str, rows: list[dict[str, Any]], icon: str = "") -> str:
+    """Render a collapsible section with compact job rows."""
+    if not rows:
+        return ""
+    rows_html = "\n".join(_render_compact_row(r) for r in rows[:10])
+    extra = f' <span style="color:#94a3b8;font-size:13px;">(+{len(rows) - 10} more)</span>' if len(rows) > 10 else ""
+    return f"""
+    <div style="background:#fff;border-radius:12px;overflow:hidden;
+                box-shadow:0 1px 3px rgba(0,0,0,0.08);margin-top:16px;">
+      <div style="padding:14px 24px;border-bottom:1px solid #e5e7eb;">
+        <h3 style="margin:0;font-size:15px;color:#475569;">
+          {icon} {title} ({len(rows)}){extra}
+        </h3>
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tbody>{rows_html}</tbody>
+      </table>
+    </div>"""
+
+
 def generate_digest(
     scored_jobs: list[dict[str, Any]],
     run_date: date | None = None,
+    still_open: list[dict[str, Any]] | None = None,
+    recently_closed: list[dict[str, Any]] | None = None,
 ) -> str:
     """Return an HTML email body for the given scored job list.
 
     *scored_jobs* should already contain ``_score`` dicts (as produced by
     ``scorer.score_jobs``).  They are re-sorted by score descending here for
     safety.
+
+    *still_open* and *recently_closed* are optional DB rows for extra sections.
     """
     today = run_date or date.today()
     date_str = today.strftime("%B %d, %Y")
@@ -171,6 +219,14 @@ def generate_digest(
 
     # Build job rows
     rows_html = "\n".join(_render_job_row(j, i + 1) for i, j in enumerate(top))
+
+    # Build extra sections
+    still_open_html = _render_section(
+        "Still Open", still_open or [], icon="&#128994;"
+    )
+    closed_html = _render_section(
+        "Recently Closed", recently_closed or [], icon="&#128308;"
+    )
 
     return f"""\
 <!DOCTYPE html>
@@ -222,6 +278,9 @@ def generate_digest(
         </tbody>
       </table>
     </div>
+
+    {still_open_html}
+    {closed_html}
 
     <!-- Footer -->
     <div style="text-align:center;padding:24px 0 8px;color:#94a3b8;font-size:12px;">

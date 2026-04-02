@@ -52,18 +52,29 @@ CREATE TABLE IF NOT EXISTS jobs (
     matched_skills TEXT,
     flags       TEXT,
     first_seen  TEXT NOT NULL,
-    last_seen   TEXT NOT NULL
+    last_seen   TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT 'open'
 );
 
 CREATE INDEX IF NOT EXISTS idx_jobs_first_seen ON jobs(first_seen);
 CREATE INDEX IF NOT EXISTS idx_jobs_score      ON jobs(score);
 """
 
+_MIGRATIONS = [
+    "ALTER TABLE jobs ADD COLUMN status TEXT NOT NULL DEFAULT 'open'",
+]
+
 
 def init_db(db_path: str | Path | None = None) -> sqlite3.Connection:
     """Create tables if needed and return the connection."""
     conn = _connect(db_path)
     conn.executescript(_SCHEMA)
+    # Run migrations (ignore if column already exists)
+    for sql in _MIGRATIONS:
+        try:
+            conn.execute(sql)
+        except sqlite3.OperationalError:
+            pass  # column already exists
     conn.commit()
     return conn
 
@@ -130,6 +141,64 @@ def save_jobs(
 
     conn.commit()
     return inserted
+
+
+def mark_closed(
+    conn: sqlite3.Connection,
+    current_urls: set[str],
+    max_age_days: int = 7,
+) -> int:
+    """Mark jobs as 'closed' if they were seen recently but are no longer
+    in the current collection.  Only considers jobs first seen within
+    *max_age_days* to avoid marking ancient jobs.
+
+    Returns the number of jobs marked closed.
+    """
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=max_age_days)).isoformat()
+    rows = conn.execute(
+        "SELECT id, url FROM jobs WHERE status = 'open' AND first_seen >= ?",
+        (cutoff,),
+    ).fetchall()
+
+    closed = 0
+    for row in rows:
+        if row["url"] and row["url"] not in current_urls:
+            conn.execute(
+                "UPDATE jobs SET status = 'closed' WHERE id = ?", (row["id"],)
+            )
+            closed += 1
+
+    if closed:
+        conn.commit()
+    return closed
+
+
+def get_open_jobs(
+    conn: sqlite3.Connection,
+    days: int = 7,
+) -> list[dict[str, Any]]:
+    """Return open jobs first seen within the last *days* days."""
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    rows = conn.execute(
+        "SELECT * FROM jobs WHERE status = 'open' AND first_seen >= ? "
+        "ORDER BY score DESC, first_seen DESC",
+        (cutoff,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_closed_jobs(
+    conn: sqlite3.Connection,
+    days: int = 3,
+) -> list[dict[str, Any]]:
+    """Return recently closed jobs."""
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    rows = conn.execute(
+        "SELECT * FROM jobs WHERE status = 'closed' AND last_seen >= ? "
+        "ORDER BY score DESC",
+        (cutoff,),
+    ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def get_history(

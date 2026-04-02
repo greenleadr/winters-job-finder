@@ -333,7 +333,14 @@ def score_job(
 
     flags = exp_flags + pen_flags
     raw = title_pts + skill_pts + exp_pts + ind_pts
-    final = max(raw + penalty, 0)
+
+    # Bonus: job is from a target company in companies.json
+    company_boost = 0
+    target_companies = profile.get("_target_companies", set())
+    if target_companies and company.lower().strip() in target_companies:
+        company_boost = 5
+
+    final = max(raw + penalty + company_boost, 0)
 
     return {
         "score": final,
@@ -342,12 +349,23 @@ def score_job(
             "skills": skill_pts,
             "experience": exp_pts,
             "industry": ind_pts,
+            "company_boost": company_boost,
             "penalty": penalty,
         },
         "matched_skills": matched_skills,
         "gaps": gaps,
         "flags": flags,
     }
+
+
+def _load_target_companies() -> set[str]:
+    """Load company names from companies.json for boost scoring."""
+    path = Path(__file__).resolve().parent / "companies.json"
+    try:
+        with open(path) as f:
+            return {c["name"].lower().strip() for c in json.load(f)}
+    except (FileNotFoundError, json.JSONDecodeError, KeyError):
+        return set()
 
 
 def score_jobs(
@@ -361,6 +379,9 @@ def score_jobs(
     """
     if profile is None:
         profile = load_profile()
+
+    # Inject target companies for boost scoring
+    profile = {**profile, "_target_companies": _load_target_companies()}
 
     results: list[dict[str, Any]] = []
     for job in jobs:
