@@ -1,7 +1,7 @@
 {
-  "name": "Job Search Profile",
-  "headline": "Senior Technical Product Leader",
-  "summary": "Senior Technical Product Leader with 15+ years of experience at Amazon, Apple, Google, and Chewy, driving product strategy, platform development, and data-driven growth across e-commerce, SaaS, and enterprise domains.",
+  "name": "Michael Adam Winters",
+  "headline": "Senior Technical Product Leader | Team Builder | Org Transformer",
+  "summary": "Product Leader with 15+ years of experience at Amazon, Apple, Google, and Chewy, focused on transforming organizations from intuition-based decision-making to data-driven product strategy. Built and scaled enterprise platforms serving 30,000+ daily users, established foundational KPI frameworks from the ground up, and replaced manual reporting workflows across 300+ operating locations with automated analytics infrastructure. Drove $325M+ in measurable cost savings and efficiency gains. Leads multi-year roadmaps from discovery through go-to-market execution in SaaS and e-commerce environments, with particular depth in complex, undefined product spaces requiring deep analytical rigor.",
   "target_titles": [
     "Associate Director of Product",
     "Senior Manager of Product Management",
@@ -51,10 +51,243 @@
       "computer vision"
     ]
   },
+  "skill_variants": {
+    "product strategy": [
+      "product vision",
+      "strategic direction",
+      "product direction",
+      "product planning",
+      "product development strategy",
+      "go-to-market strategy",
+      "GTM strategy",
+      "go-to-market"
+    ],
+    "roadmap": [
+      "product roadmap",
+      "technical roadmap",
+      "roadmap execution",
+      "multi-year roadmap",
+      "strategic roadmap",
+      "technology roadmap"
+    ],
+    "P&L": [
+      "profit and loss",
+      "revenue ownership",
+      "cost avoidance",
+      "cost savings",
+      "budget ownership",
+      "financial accountability",
+      "cost model",
+      "net present value",
+      "NPV"
+    ],
+    "platform": [
+      "platform modernization",
+      "platform architecture",
+      "re-architecture",
+      "platform development",
+      "scalable platform",
+      "enterprise platform"
+    ],
+    "product-led growth": [
+      "PLG",
+      "self-serve",
+      "product led",
+      "user adoption",
+      "freemium"
+    ],
+    "data-driven": [
+      "data driven",
+      "quantitative",
+      "metrics-driven",
+      "evidence-based",
+      "data-informed",
+      "outcome-driven"
+    ],
+    "cross-functional": [
+      "cross functional",
+      "interdisciplinary",
+      "matrixed",
+      "cross-org",
+      "multi-disciplinary"
+    ],
+    "enterprise": [
+      "enterprise-scale",
+      "Fortune 500",
+      "large-scale",
+      "global scale"
+    ],
+    "e-commerce": [
+      "ecommerce",
+      "online retail",
+      "digital commerce",
+      "marketplace",
+      "retail technology",
+      "purchase funnel",
+      "conversion"
+    ],
+    "compliance": [
+      "regulatory",
+      "audit",
+      "attestation",
+      "SOC2",
+      "SOC 2",
+      "governance",
+      "regulatory compliance",
+      "compliance program"
+    ],
+    "GRC": [
+      "governance risk and compliance",
+      "governance risk compliance",
+      "risk management",
+      "risk and compliance"
+    ],
+    "AI/ML": [
+      "artificial intelligence",
+      "LLM",
+      "large language model",
+      "generative AI",
+      "GenAI",
+      "AI-powered",
+      "AI integration",
+      "AI enablement"
+    ],
+    "analytics": [
+      "product analytics",
+      "business intelligence",
+      "BI",
+      "metrics",
+      "KPI",
+      "KPIs",
+      "operational metrics",
+      "data visibility",
+      "metrics framework",
+      "metrics ownership",
+      "data quality"
+    ],
+    "instrumentation": [
+      "event tracking",
+      "telemetry",
+      "metrics framework",
+      "metrics instrumentation",
+      "data instrumentation"
+    ],
+    "agile": [
+      "agile methodologies",
+      "sprint planning",
+      "kanban",
+      "agile project management",
+      "agile development"
+    ],
+    "scrum": [
+      "scrum master",
+      "sprint",
+      "sprint review",
+      "backlog management"
+    ],
+    "OKRs": [
+      "objectives and key results",
+      "OKR framework",
+      "goal setting",
+      "KPI framework"
+    ],
+    "voice of customer": [
+      "VoC",
+      "customer research",
+      "user research",
+      "customer feedback",
+      "customer insights",
+      "customer satisfaction",
+      "CSAT"
+    ],
+    "privacy": [
+      "data privacy",
+      "DSAR",
+      "data subject",
+      "privacy by design",
+      "data protection",
+      "PII"
+    ],
+    "PCI DSS": [
+      "PCI compliance",
+      "PCI",
+      "payment card industry",
+      "PCI 4.0"
+    ],
+    "CCPA": [
+      "California Consumer Privacy Act",
+      "data subject access",
+      "consumer privacy"
+    ],
+    "stakeholder management": [
+      "executive stakeholders",
+      "C-suite",
+      "VP-level",
+      "senior leadership",
+      "stakeholder alignment",
+      "executive alignment"
+    ],
+    "executive communication": [
+      "executive reporting",
+      "board presentation",
+      "leadership communication",
+      "executive visibility"
+    ],
+    "people leadership": [
+      "people management",
+      "direct reports",
+      "team leadership",
+      "coaching",
+      "mentoring",
+      "performance management",
+      "talent development",
+      "team building",
+      "org building"
+    ],
+    "dashboard": [
+      "dashboards",
+      "reporting",
+      "data visualization",
+      "executive reporting",
+      "dashboard development",
+      "custom dashboards"
+    ],
+    "data pipeline": [
+      "data pipelines",
+      "ETL",
+      "data infrastructure",
+      "data architecture",
+      "data engineering"
+    ],
+    "machine learning": [
+      "ML",
+      "ML models",
+      "predictive models",
+      "model deployment"
+    ],
+    "computer vision": [
+      "CV",
+      "image recognition",
+      "defect detection",
+      "visual inspection"
+    ],
+    "SQL": [
+      "database",
+      "queries",
+      "data analysis"
+    ],
+    "Tableau": [
+      "BI tools",
+      "visualization tools",
+      "Looker",
+      "Power BI"
+    ]
+  },
   "experience": {
     "total_years": 15,
     "management_years": 8,
     "largest_team_size": 21,
+    "total_direct_reports_max": 33,
     "notable_companies": [
       "Amazon",
       "Apple",
@@ -65,9 +298,103 @@
       "e-commerce",
       "SaaS",
       "retail",
-      "tech"
+      "tech",
+      "supply chain",
+      "logistics",
+      "consumer electronics",
+      "contact center"
+    ],
+    "roles": [
+      {
+        "title": "Founder / Independent Product Consultant",
+        "company": "Winters Product Group LLC",
+        "dates": "Oct 2025 – Present",
+        "highlights": [
+          "Fractional product leadership for not-for-profit, retail, and e-commerce businesses",
+          "Built VetReady: AI-powered pet health platform (React/Supabase/Stripe/Vercel, Anthropic Claude API)"
+        ]
+      },
+      {
+        "title": "Associate Director of Technical Product",
+        "company": "Chewy",
+        "dates": "Apr 2023 – Oct 2025",
+        "highlights": [
+          "Built first automated compliance analytics platform from ground up",
+          "Led PCI DSS 4.0 readiness across 3 business entities, reducing audit cycle time 50%",
+          "Operationalized CCPA/DSAR program: 2-3K requests bi-weekly, 4-day avg completion (91% faster than SLA)",
+          "Directed 'Chewy Heartbeat' analytics dashboard for executive data visibility",
+          "Designed AI/LLM enablement program for 20+ product teams",
+          "Managed 13 direct reports across global teams"
+        ]
+      },
+      {
+        "title": "Principal Technical Product Manager, Computer Vision ML",
+        "company": "Amazon",
+        "dates": "Jun 2022 – Apr 2023",
+        "highlights": [
+          "Led 21-person cross-functional team for computer vision defect detection",
+          "Deployed across 300+ fulfillment centers, 11% reduction in item defect rates"
+        ]
+      },
+      {
+        "title": "Senior Technical Product Manager, Quantitative BI Tools",
+        "company": "Amazon",
+        "dates": "Sep 2020 – Jun 2022",
+        "highlights": [
+          "Re-architected largest operational metrics platform (30,000 daily users)",
+          "Reduced page load from 3 min to 5 sec (97% improvement)",
+          "100+ custom dashboards in first month, eliminated 3,000 hrs/week operational overhead",
+          "$32M cost avoidance through platform optimization",
+          "Managed 3 managers + 30 ICs, drove 4 promotions"
+        ]
+      },
+      {
+        "title": "Senior Product Manager, Supply Chain Innovations",
+        "company": "Amazon",
+        "dates": "Jul 2018 – Sep 2020",
+        "highlights": [
+          "Project Kariba: $293M supply chain cost avoidance over 3 years",
+          "Launched 7 new 3PL solutions, $50M+ NPV",
+          "Led pandemic-response tooling 5-day turnaround"
+        ]
+      },
+      {
+        "title": "Product Manager, Contact Center Operations",
+        "company": "Apple",
+        "dates": "Oct 2015 – May 2017",
+        "highlights": [
+          "Designed day-one support for Apple Watch 1.0, 96% CSAT at launch",
+          "Deployed real-time video/screen sharing/chatbot across 5 global contact centers, 2,000+ agents"
+        ]
+      },
+      {
+        "title": "Partner Operations Manager",
+        "company": "Google",
+        "dates": "Sep 2013 – Oct 2015",
+        "highlights": [
+          "Managed Google-Walmart partnership: 10,000+ daily product listing ads, $10M+/month revenue",
+          "Led complete operational overhaul with custom software toolset"
+        ]
+      }
     ]
   },
+  "key_metrics": {
+    "total_cost_impact": "$325M+",
+    "project_kariba_savings": "$293M over 3 years",
+    "platform_cost_avoidance": "$32M",
+    "special_handling_npv": "$50M+",
+    "platform_daily_users": 30000,
+    "page_load_improvement": "3 min to 5 sec (97%)",
+    "fulfillment_centers_served": 300,
+    "defect_rate_reduction": "11%",
+    "dsar_completion_time": "4 days vs 45-day SLA (91% faster)",
+    "audit_cycle_reduction": "50%",
+    "max_direct_reports": 33,
+    "max_cross_functional_team": 21,
+    "apple_watch_csat": "96%",
+    "google_walmart_monthly_revenue": "$10M+"
+  },
+  "resume_context": "Michael Adam Winters is a Senior Technical Product Leader with 15+ years at Amazon (6 years), Apple, Google, and Chewy. At Chewy (Associate Director), he built the first automated compliance analytics platform, led PCI DSS 4.0 readiness across 3 entities (50% audit cycle reduction), operationalized CCPA/DSAR at enterprise scale (2-3K requests bi-weekly, 4-day completion vs 45-day SLA), directed 'Chewy Heartbeat' analytics dashboard for executive visibility, designed AI/LLM enablement for 20+ product teams, and managed 13 global reports. At Amazon, he led a 21-person CV/ML team deploying defect detection across 300+ fulfillment centers (11% defect reduction), re-architected the largest operational metrics platform (30K daily users, 97% page load improvement), built custom dashboard generators eliminating 3,000 hrs/week overhead, drove $32M cost avoidance, managed 3 managers + 30 ICs, and created Project Kariba ($293M supply chain savings). At Apple, he designed day-one Apple Watch 1.0 support (96% CSAT) and deployed video/chatbot tools across 5 global centers for 2,000+ agents. At Google, he managed the Walmart partnership ($10M+/month, 10K+ daily product ads). He founded Winters Product Group providing fractional product leadership and built VetReady, an AI-powered health platform using React/Supabase/Stripe/Vercel/Claude API. Core strengths: data-driven product strategy, platform modernization, compliance/GRC (PCI DSS, CCPA, BigID, SailPoint), AI/ML integration, analytics instrumentation, cross-functional leadership at scale, and transforming organizations from reactive to outcome-driven.",
   "preferences": {
     "work_arrangement": [
       "remote",

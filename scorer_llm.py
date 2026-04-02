@@ -42,20 +42,31 @@ def _build_prompt(job: dict[str, Any], profile: dict[str, Any]) -> str:
     desc = (job.get("description", "") or "")[:MAX_DESC_CHARS]
     tier1 = job.get("_score", {})
 
-    profile_summary = (
-        f"Candidate: {profile.get('headline', '')}\n"
-        f"Target titles: {', '.join(profile.get('target_titles', []))}\n"
-        f"High-weight skills: {', '.join(profile.get('skills', {}).get('high', []))}\n"
-        f"Medium-weight skills: {', '.join(profile.get('skills', {}).get('medium', []))}\n"
-        f"Experience: {profile.get('experience', {}).get('total_years', 0)} years total, "
-        f"{profile.get('experience', {}).get('management_years', 0)} years management, "
-        f"largest team {profile.get('experience', {}).get('largest_team_size', 0)}\n"
-        f"Industries: {', '.join(profile.get('experience', {}).get('industries', []))}\n"
-        f"Notable companies: {', '.join(profile.get('experience', {}).get('notable_companies', []))}\n"
-        f"Preferences: {', '.join(profile.get('preferences', {}).get('work_arrangement', []))} | "
-        f"{', '.join(profile.get('preferences', {}).get('locations', []))}\n"
-        f"Dealbreakers: {', '.join(profile.get('dealbreakers', []))}"
-    )
+    # Use the rich resume context if available, otherwise fall back to structured fields
+    resume_ctx = profile.get("resume_context", "")
+    if resume_ctx:
+        profile_summary = (
+            f"{resume_ctx}\n\n"
+            f"Target titles: {', '.join(profile.get('target_titles', []))}\n"
+            f"Preferences: {', '.join(profile.get('preferences', {}).get('work_arrangement', []))} | "
+            f"{', '.join(profile.get('preferences', {}).get('locations', []))}\n"
+            f"Dealbreakers: {', '.join(profile.get('dealbreakers', []))}"
+        )
+    else:
+        profile_summary = (
+            f"Candidate: {profile.get('headline', '')}\n"
+            f"Target titles: {', '.join(profile.get('target_titles', []))}\n"
+            f"High-weight skills: {', '.join(profile.get('skills', {}).get('high', []))}\n"
+            f"Medium-weight skills: {', '.join(profile.get('skills', {}).get('medium', []))}\n"
+            f"Experience: {profile.get('experience', {}).get('total_years', 0)} years total, "
+            f"{profile.get('experience', {}).get('management_years', 0)} years management, "
+            f"largest team {profile.get('experience', {}).get('largest_team_size', 0)}\n"
+            f"Industries: {', '.join(profile.get('experience', {}).get('industries', []))}\n"
+            f"Notable companies: {', '.join(profile.get('experience', {}).get('notable_companies', []))}\n"
+            f"Preferences: {', '.join(profile.get('preferences', {}).get('work_arrangement', []))} | "
+            f"{', '.join(profile.get('preferences', {}).get('locations', []))}\n"
+            f"Dealbreakers: {', '.join(profile.get('dealbreakers', []))}"
+        )
 
     return (
         f"You are evaluating a job posting for fit with this candidate. "

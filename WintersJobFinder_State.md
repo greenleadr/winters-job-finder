@@ -2,7 +2,7 @@
 
 > Last updated: 2026-04-01
 
-## Current Iteration: v0.5
+## Current Iteration: v0.6
 
 ### What Works
 - **Career pages collector**: Queries Greenhouse, Lever, and Ashby public JSON APIs for all 76 supported companies (85 total minus 8 Workday + 1 Rippling). Filters to product-leadership titles. Returns full job descriptions for better scoring.
@@ -31,14 +31,14 @@
 - After location filter: 17
 - Top score: 40
 - Strong matches (70+): 0
-- **Expected improvement**: Career pages collector should add 50-200+ jobs with full descriptions, significantly improving skill matching and scores.
+- **Expected improvement**: Career pages collector + skill variants should dramatically increase both job count and scores. Variant matching alone improved a test JD from 54 → 75 (+21 points, 3 → 14 skill matches).
 - Email: Sent successfully
 
 ## Component Status
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| `profile.json` | Done | 8 target titles, 31 weighted skills, dealbreakers |
+| `profile.json` | Done | 8 target titles, 31 skills + 30 variant groups, 7 roles, 14 key metrics, resume context |
 | `companies.json` | Done | 85 companies, 5 ATS types, verified URLs |
 | `collectors/adzuna.py` | Done | 8 title queries x 2 locations (Seattle + Remote), rate limiting, retry |
 | `collectors/remotive.py` | Done | Title filter regex, HTML stripping |

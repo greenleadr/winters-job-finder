@@ -91,17 +91,29 @@ _MED_CAP = 10    # 2 pts × 5 matches max
 _LOW_CAP = 6     # 1 pt  × 6 matches max
 
 
+def _skill_matches(desc: str, skill: str, variants: dict[str, list[str]]) -> bool:
+    """Check if *skill* or any of its variants appear in *desc*."""
+    if _has(desc, skill):
+        return True
+    for v in variants.get(skill, []):
+        if _has(desc, v):
+            return True
+    return False
+
+
 def _score_skills(
     description: str,
     skills: dict[str, list[str]],
+    variants: dict[str, list[str]] | None = None,
 ) -> tuple[int, list[str], list[str]]:
     desc = _lower(description)
     matched: list[str] = []
     missed: list[str] = []
+    vmap = variants or {}
 
     high_pts = 0
     for s in skills.get("high", []):
-        if _has(desc, s):
+        if _skill_matches(desc, s, vmap):
             matched.append(s)
             high_pts += 3
         else:
@@ -110,7 +122,7 @@ def _score_skills(
 
     med_pts = 0
     for s in skills.get("medium", []):
-        if _has(desc, s):
+        if _skill_matches(desc, s, vmap):
             matched.append(s)
             med_pts += 2
         else:
@@ -119,7 +131,7 @@ def _score_skills(
 
     low_pts = 0
     for s in skills.get("low", []):
-        if _has(desc, s):
+        if _skill_matches(desc, s, vmap):
             matched.append(s)
             low_pts += 1
         else:
@@ -304,7 +316,9 @@ def score_job(
     company = job.get("company", "")
 
     title_pts = _score_title(title, profile.get("target_titles", []))
-    skill_pts, matched_skills, gaps = _score_skills(desc, profile.get("skills", {}))
+    skill_pts, matched_skills, gaps = _score_skills(
+        desc, profile.get("skills", {}), profile.get("skill_variants"),
+    )
     exp_pts, exp_flags = _score_experience(desc, profile.get("experience", {}))
     ind_pts = _score_industry(
         desc, company,
