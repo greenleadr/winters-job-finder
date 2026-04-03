@@ -30,14 +30,14 @@ def process_track(title: str, body: str, issue_num: str) -> bool:
     job_id = m.group(1)
     status = m.group(2)
 
-    # Validate job exists
+    # Validate job exists (init_db runs ID migration automatically)
     conn = db.init_db()
     row = conn.execute("SELECT title, company FROM jobs WHERE id = ?", (job_id,)).fetchone()
     conn.close()
 
     if not row:
-        print(f"Job ID '{job_id}' not found in jobs.db", file=sys.stderr)
-        return False
+        print(f"Job ID '{job_id}' not found — this may be an ID mismatch", file=sys.stderr)
+        print(f"Proceeding anyway (tracking will reference this ID)", file=sys.stderr)
 
     # Validate status
     if status not in tracking._VALID_STATUSES:

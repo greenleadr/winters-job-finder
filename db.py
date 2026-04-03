@@ -116,7 +116,33 @@ def init_db(db_path: str | Path | None = None) -> sqlite3.Connection:
         except sqlite3.OperationalError:
             pass  # column already exists
     conn.commit()
+    # One-time migration: re-key jobs with normalized URLs
+    _migrate_normalize_ids(conn)
     return conn
+
+
+def _migrate_normalize_ids(conn: sqlite3.Connection) -> None:
+    """Re-key jobs whose stored ID doesn't match the current job_id() hash.
+
+    This handles the transition from pre-URL-normalization IDs to
+    post-normalization IDs. Runs once — after all IDs match, it's a no-op.
+    """
+    rows = conn.execute("SELECT id, title, company, url FROM jobs").fetchall()
+    updated = 0
+    for row in rows:
+        new_id = job_id(row["title"], row["company"], row["url"])
+        if new_id != row["id"]:
+            # Check if new_id already exists (avoid duplicate key)
+            existing = conn.execute("SELECT 1 FROM jobs WHERE id = ?", (new_id,)).fetchone()
+            if existing:
+                # New ID already exists — just delete the old row
+                conn.execute("DELETE FROM jobs WHERE id = ?", (row["id"],))
+            else:
+                conn.execute("UPDATE jobs SET id = ? WHERE id = ?", (new_id, row["id"]))
+            updated += 1
+    if updated:
+        conn.commit()
+        print(f"  Migrated {updated} job IDs to normalized URLs", file=sys.stderr)
 
 
 # ---------------------------------------------------------------------------
