@@ -232,9 +232,12 @@ def generate_dashboard(conn: sqlite3.Connection, run_date: date | None = None) -
             "skills": _profile.get("skills", {}),
             "skill_variants": _profile.get("skill_variants", {}),
             "target_companies": list(_load_target_companies()),
+            "total_years": _profile.get("experience", {}).get("total_years", 0),
+            "industries": _profile.get("experience", {}).get("industries", []),
+            "company_sizes": _profile.get("preferences", {}).get("company_size", []),
         }
     except Exception:
-        profile_scoring = {"target_titles": [], "skills": {}, "skill_variants": {}, "target_companies": []}
+        profile_scoring = {"target_titles": [], "skills": {}, "skill_variants": {}, "target_companies": [], "total_years": 15, "industries": [], "company_sizes": []}
     profile_json_str = json.dumps(profile_scoring, separators=(",", ":"))
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -447,15 +450,16 @@ function clientScore(title, company, description) {
   const desc = (description || '').toLowerCase();
   const t = (title || '').toLowerCase();
   const co = (company || '').toLowerCase();
+  const allText = desc + ' ' + co;
 
-  // Title match (0-30)
+  // 1. Title match (0-30)
   let titlePts = 0;
   const targets = PROFILE.target_titles.map(x => x.toLowerCase());
   if (targets.some(tt => t.includes(tt) || tt.includes(t))) titlePts = 30;
-  else if (t.includes('product') && /director|vp|head|senior manager/.test(t)) titlePts = 20;
-  else if (/senior product manager|staff product manager|principal product manager|group product manager/.test(t)) titlePts = 10;
+  else if (t.includes('product') && /director|vp|vice president|head of|senior manager|associate director/.test(t)) titlePts = 20;
+  else if (/senior product manager|staff product manager|principal product manager|group product manager|product lead/.test(t)) titlePts = 10;
 
-  // Skill match (0-40)
+  // 2. Skill match (0-40)
   const skills = PROFILE.skills || {};
   const variants = PROFILE.skill_variants || {};
   let matched = [], gaps = [];
@@ -483,16 +487,58 @@ function clientScore(title, company, description) {
   lowPts = Math.min(lowPts, 6);
   const skillPts = highPts + medPts + lowPts;
 
-  // Company boost
-  const companyBoost = PROFILE.target_companies.includes(co) ? 5 : 0;
+  // 3. Experience alignment (0-15)
+  let expPts = 0;
+  const myYears = PROFILE.total_years || 15;
+  const yearsMatch = desc.match(/(\d{1,2})\s*[\-–to]+\s*(\d{1,2})\s*\+?\s*year/i) ||
+                     desc.match(/(\d{1,2})\s*\+\s*year/i);
+  if (yearsMatch) {
+    const lo = parseInt(yearsMatch[1]);
+    const hi = yearsMatch[2] ? parseInt(yearsMatch[2]) : lo + 10;
+    if (myYears >= lo && myYears <= hi) expPts += 10;
+  } else {
+    expPts += 5; // no years mentioned = neutral credit
+  }
+  const teamKw = ['manage a team','managing a team','lead a team','leading a team','direct reports','people management','team of','org of'];
+  if (teamKw.some(k => desc.includes(k))) expPts += 5;
 
-  // Description boost
+  // 4. Industry/company fit (0-15)
+  let indPts = 0;
+  const industries = (PROFILE.industries || []).map(i => i.toLowerCase());
+  let indMatches = 0;
+  for (const ind of industries) {
+    if (hasMatch(allText, ind)) indMatches++;
+  }
+  indPts += Math.min(indMatches * 5, 10);
+  const entKw = ['enterprise','fortune 500','large-scale','global','publicly traded'];
+  const midKw = ['series b','series c','series d','growth stage','mid-size'];
+  const sizes = PROFILE.company_sizes || [];
+  if (sizes.includes('enterprise') && entKw.some(k => hasMatch(allText, k))) indPts += 5;
+  if (sizes.includes('mid-size') && midKw.some(k => hasMatch(allText, k))) indPts += 5;
+  indPts = Math.min(indPts, 15);
+
+  // 5. Penalties
+  let penalty = 0;
+  let flags = [];
+  if (/\b(hands[- ]on\s+coding|write\s+production\s+code|must\s+code\s+daily)\b/i.test(desc)) {
+    penalty -= 15; flags.push('dealbreaker: hands-on coding');
+  } else if (/\b(junior|entry[- ]level)\b/i.test(t + ' ' + desc)) {
+    penalty -= 15; flags.push('dealbreaker: junior scope');
+  }
+  const overqualMatch = desc.match(/\b([1-5])\s*[\-–to]+\s*([3-7])\s*\+?\s*year/i);
+  if (overqualMatch) {
+    const hi = parseInt(overqualMatch[2]);
+    if (myYears > hi + 5) { penalty -= 10; flags.push('overqualified'); }
+  }
+
+  // 6. Boosts
+  const companyBoost = PROFILE.target_companies.includes(co) ? 5 : 0;
   const descBoost = desc.length >= 500 ? 3 : 0;
 
-  const raw = titlePts + skillPts + companyBoost + descBoost;
+  const raw = titlePts + skillPts + expPts + indPts + penalty + companyBoost + descBoost;
   const score = Math.max(raw, 0);
 
-  return { score, titlePts, skillPts, companyBoost, descBoost, matched, gaps };
+  return { score, titlePts, skillPts, expPts, indPts, penalty, companyBoost, descBoost, matched, gaps, flags };
 }
 
 function runEvaluate() {
@@ -509,8 +555,14 @@ function runEvaluate() {
   let html = `<div style="padding:16px;">`;
   html += `<div style="font-size:20px;font-weight:800;color:${sc};margin-bottom:8px;">Tier 1 Score: ${r.score}</div>`;
   html += `<div style="font-size:13px;color:#94a3b8;margin-bottom:12px;">`;
-  html += `Title: ${r.titlePts}/30 &middot; Skills: ${r.skillPts}/40 &middot; Company: +${r.companyBoost} &middot; Desc: +${r.descBoost}`;
+  html += `Title: ${r.titlePts}/30 &middot; Skills: ${r.skillPts}/40 &middot; Experience: ${r.expPts}/15 &middot; Industry: ${r.indPts}/15 &middot; Company: +${r.companyBoost} &middot; Desc: +${r.descBoost}`;
+  if (r.penalty) html += ` &middot; <span style="color:#ef4444;">Penalty: ${r.penalty}</span>`;
   html += `</div>`;
+  if (r.flags.length) {
+    html += `<div style="margin-bottom:8px;">`;
+    html += r.flags.map(f => pill(f, '#3b1818', '#fca5a5')).join('');
+    html += `</div>`;
+  }
   html += `<div style="margin-bottom:8px;"><span style="color:#e2e8f0;font-size:13px;font-weight:600;">Matched (${r.matched.length}):</span> `;
   html += r.matched.map(s => pill(s)).join('');
   html += `</div>`;
