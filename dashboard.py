@@ -223,6 +223,20 @@ def generate_dashboard(conn: sqlite3.Connection, run_date: date | None = None) -
     jobs_json = _build_jobs_json(all_7d, overrides, llm_cache, feedback_by_job)
     jobs_json_str = json.dumps(jobs_json, separators=(",", ":"))
 
+    # Build profile scoring data for client-side evaluation
+    try:
+        from scorer import load_profile, _load_target_companies
+        _profile = load_profile()
+        profile_scoring = {
+            "target_titles": _profile.get("target_titles", []),
+            "skills": _profile.get("skills", {}),
+            "skill_variants": _profile.get("skill_variants", {}),
+            "target_companies": list(_load_target_companies()),
+        }
+    except Exception:
+        profile_scoring = {"target_titles": [], "skills": {}, "skill_variants": {}, "target_companies": []}
+    profile_json_str = json.dumps(profile_scoring, separators=(",", ":"))
+
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     # JavaScript block
@@ -230,6 +244,7 @@ def generate_dashboard(conn: sqlite3.Connection, run_date: date | None = None) -
 <script>
 const REPO = '""" + REPO + """';
 const JOBS = """ + jobs_json_str + """;
+const PROFILE = """ + profile_json_str + """;
 let displayCount = 50;
 let expandedId = null;
 
@@ -422,6 +437,109 @@ function openFeedback(jobId, field, rating, title, company) {
   window.open(`https://github.com/${REPO}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(body)}&labels=bot-feedback`, '_blank');
 }
 
+// === Client-side Tier 1 Scoring for Evaluate ===
+
+function hasMatch(text, term) {
+  return text.includes(term.toLowerCase());
+}
+
+function clientScore(title, company, description) {
+  const desc = (description || '').toLowerCase();
+  const t = (title || '').toLowerCase();
+  const co = (company || '').toLowerCase();
+
+  // Title match (0-30)
+  let titlePts = 0;
+  const targets = PROFILE.target_titles.map(x => x.toLowerCase());
+  if (targets.some(tt => t.includes(tt) || tt.includes(t))) titlePts = 30;
+  else if (t.includes('product') && /director|vp|head|senior manager/.test(t)) titlePts = 20;
+  else if (/senior product manager|staff product manager|principal product manager|group product manager/.test(t)) titlePts = 10;
+
+  // Skill match (0-40)
+  const skills = PROFILE.skills || {};
+  const variants = PROFILE.skill_variants || {};
+  let matched = [], gaps = [];
+  let highPts = 0, medPts = 0, lowPts = 0;
+
+  function skillMatch(skill) {
+    if (hasMatch(desc, skill)) return true;
+    for (const v of (variants[skill] || [])) {
+      if (hasMatch(desc, v)) return true;
+    }
+    return false;
+  }
+
+  for (const s of (skills.high || [])) {
+    if (skillMatch(s)) { matched.push(s); highPts += 3; } else gaps.push(s);
+  }
+  highPts = Math.min(highPts, 24);
+  for (const s of (skills.medium || [])) {
+    if (skillMatch(s)) { matched.push(s); medPts += 2; } else gaps.push(s);
+  }
+  medPts = Math.min(medPts, 10);
+  for (const s of (skills.low || [])) {
+    if (skillMatch(s)) { matched.push(s); lowPts += 1; } else gaps.push(s);
+  }
+  lowPts = Math.min(lowPts, 6);
+  const skillPts = highPts + medPts + lowPts;
+
+  // Company boost
+  const companyBoost = PROFILE.target_companies.includes(co) ? 5 : 0;
+
+  // Description boost
+  const descBoost = desc.length >= 500 ? 3 : 0;
+
+  const raw = titlePts + skillPts + companyBoost + descBoost;
+  const score = Math.max(raw, 0);
+
+  return { score, titlePts, skillPts, companyBoost, descBoost, matched, gaps };
+}
+
+function runEvaluate() {
+  const title = document.getElementById('eval-title').value.trim();
+  const company = document.getElementById('eval-company').value.trim();
+  const location = document.getElementById('eval-location').value.trim();
+  const description = document.getElementById('eval-description').value.trim();
+
+  if (!description) { alert('Please paste a job description'); return; }
+
+  const r = clientScore(title, company, description);
+  const sc = scoreColor(r.score);
+
+  let html = `<div style="padding:16px;">`;
+  html += `<div style="font-size:20px;font-weight:800;color:${sc};margin-bottom:8px;">Tier 1 Score: ${r.score}</div>`;
+  html += `<div style="font-size:13px;color:#94a3b8;margin-bottom:12px;">`;
+  html += `Title: ${r.titlePts}/30 &middot; Skills: ${r.skillPts}/40 &middot; Company: +${r.companyBoost} &middot; Desc: +${r.descBoost}`;
+  html += `</div>`;
+  html += `<div style="margin-bottom:8px;"><span style="color:#e2e8f0;font-size:13px;font-weight:600;">Matched (${r.matched.length}):</span> `;
+  html += r.matched.map(s => pill(s)).join('');
+  html += `</div>`;
+  html += `<div style="margin-bottom:12px;"><span style="color:#e2e8f0;font-size:13px;font-weight:600;">Gaps (${r.gaps.length}):</span> `;
+  html += r.gaps.slice(0, 8).map(s => pill(s, '#3b1818', '#fca5a5')).join('');
+  if (r.gaps.length > 8) html += ` <span style="color:#64748b;font-size:11px;">+${r.gaps.length-8}</span>`;
+  html += `</div>`;
+
+  // Deep evaluate button (Tier 2 via GitHub Issue)
+  html += `<button onclick="submitDeepEval()" style="background:#7c3aed;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;">Deep Evaluate with AI (Tier 2)</button>`;
+  html += `<span style="color:#64748b;font-size:11px;margin-left:8px;">Opens GitHub Issue — results posted as comment in ~60s</span>`;
+  html += `</div>`;
+
+  document.getElementById('eval-result').innerHTML = html;
+  document.getElementById('eval-result').style.display = 'block';
+}
+
+function submitDeepEval() {
+  const title = document.getElementById('eval-title').value.trim() || 'Unknown';
+  const company = document.getElementById('eval-company').value.trim() || 'Unknown';
+  const location = document.getElementById('eval-location').value.trim() || '';
+  const description = document.getElementById('eval-description').value.trim();
+
+  const issueTitle = '[EVALUATE] Manual job evaluation';
+  const body = `Title: ${title}\\nCompany: ${company}\\nLocation: ${location}\\nDescription:\\n${description.substring(0, 3000)}`;
+  const url = `https://github.com/${REPO}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(body)}&labels=bot-evaluate`;
+  window.open(url, '_blank');
+}
+
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   // Populate source dropdown
@@ -570,6 +688,23 @@ document.addEventListener('DOMContentLoaded', () => {
         <span>&#9940; Rejected</span>
         <span style="margin-left:12px;">Click any row to expand details and track status</span>
       </div>
+    </div>
+
+    <!-- Evaluate a Job -->
+    <div class="card">
+      <h2>Evaluate a Job</h2>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">
+        Paste a job description to get an instant Tier 1 score, or click "Deep Evaluate" for Claude AI analysis.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+        <input type="text" id="eval-title" placeholder="Job title" style="background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:8px 10px;font-size:13px;">
+        <input type="text" id="eval-company" placeholder="Company" style="background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:8px 10px;font-size:13px;">
+        <input type="text" id="eval-location" placeholder="Location" style="background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:8px 10px;font-size:13px;">
+      </div>
+      <textarea id="eval-description" rows="8" placeholder="Paste the full job description here..."
+        style="width:100%;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:10px;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:10px;"></textarea>
+      <button onclick="runEvaluate()" style="background:#1d4ed8;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">Score This Job</button>
+      <div id="eval-result" style="display:none;margin-top:14px;background:#0f172a;border:1px solid #334155;border-radius:10px;"></div>
     </div>
 
     <div class="footer">

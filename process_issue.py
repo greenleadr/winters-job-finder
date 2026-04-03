@@ -127,6 +127,19 @@ def main():
         ok = process_feedback(title, body, issue_num)
     elif title.startswith("[FAVORITE]"):
         ok = process_favorite(title, body, issue_num)
+    elif title.startswith("[EVALUATE]"):
+        # Evaluation is handled separately — output is posted as issue comment
+        from evaluate import process_evaluate_issue
+        output = process_evaluate_issue()
+        if output:
+            # Write to a file that the workflow can read and post as a comment
+            with open("/tmp/evaluate_result.md", "w") as f:
+                f.write(output)
+            print(output)
+            ok = True
+        else:
+            print("Could not parse evaluation issue", file=sys.stderr)
+            ok = False
     else:
         print(f"Unknown issue type: {title}", file=sys.stderr)
         ok = False
