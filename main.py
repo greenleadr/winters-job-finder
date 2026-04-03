@@ -51,15 +51,57 @@ _COLLECTORS: list[tuple[str, str]] = [
     ("hn_hiring", "collectors.hn_hiring"),
 ]
 
-# Seattle metro area patterns for location filtering
-_SEATTLE_METRO_RE = re.compile(
+# Target location allowlist — specific cities/regions we want
+_LOCATION_RE = re.compile(
     r"\b(seattle|bellevue|redmond|kirkland|tacoma|renton|kent|bothell"
     r"|woodinville|issaquah|sammamish|mercer\s+island"
-    r"|whidbey|oak\s+harbor|everett)\b",
+    r"|whidbey|oak\s+harbor|everett"
+    r"|pittsburgh"
+    r"|victoria\s*,?\s*(?:b\.?c\.?|british\s+columbia)"
+    r"|british\s+columbia"
+    r")\b",
     re.I,
 )
-_REMOTE_RE = re.compile(
-    r"\b(remote|work\s+from\s+home|distributed|anywhere)\b", re.I,
+
+# US-qualified remote — "remote" alone is NOT enough (could be remote in Europe)
+_REMOTE_US_RE = re.compile(
+    r"(?:remote|work\s+from\s+home|distributed)"
+    r"[^.]{0,40}"
+    r"(?:u\.?s\.?a?\.?|united\s+states|america)",
+    re.I,
+)
+_REMOTE_US_RE2 = re.compile(
+    r"(?:u\.?s\.?a?\.?|united\s+states)"
+    r"[^.]{0,40}"
+    r"(?:remote|work\s+from\s+home)",
+    re.I,
+)
+
+# Hard blocklist — reject jobs in these countries/cities even if they mention "Remote"
+_BLOCKED_LOCATIONS_RE = re.compile(
+    r"\b("
+    # Countries
+    r"india|ireland|germany|united\s+kingdom|france|spain|"
+    r"netherlands|australia|singapore|japan|china|brazil|mexico|israel|"
+    r"poland|czech|romania|bulgaria|ukraine|turkey|philippines|"
+    r"argentina|chile|colombia|nigeria|kenya|south\s+africa|"
+    r"new\s+zealand|sweden|norway|denmark|finland|belgium|austria|"
+    r"switzerland|portugal|italy|greece|hungary|croatia|"
+    r"canada(?!\s*,?\s*(?:bc|b\.c\.|british\s+columbia|victoria))"
+    r"|"
+    # Non-target cities
+    r"london|dublin|berlin|munich|amsterdam|paris|barcelona|madrid|"
+    r"bangalore|bengaluru|hyderabad|pune|mumbai|chennai|delhi|noida|"
+    r"gurgaon|gurugram|kolkata|"
+    r"sydney|melbourne|brisbane|"
+    r"tokyo|osaka|shanghai|beijing|shenzhen|"
+    r"hong\s+kong|taipei|seoul|"
+    r"tel\s+aviv|haifa|"
+    r"prague|warsaw|bucharest|sofia|krakow|wroclaw|"
+    r"stockholm|oslo|copenhagen|helsinki|"
+    r"toronto|montreal|vancouver(?!\s*island)"
+    r")\b",
+    re.I,
 )
 
 # Negative keywords — skip jobs containing these terms in title or description
@@ -172,12 +214,30 @@ def _passes_negative_filter(job: dict[str, Any]) -> bool:
 
 
 def _matches_location(job: dict[str, Any]) -> bool:
+    location = job.get("location", "")
     text = " ".join([
-        job.get("location", ""),
+        location,
         job.get("title", ""),
         (job.get("description", "") or "")[:500],
     ])
-    return bool(_SEATTLE_METRO_RE.search(text) or _REMOTE_RE.search(text))
+
+    # 1. Check allowlist FIRST — if a target city is in the location, accept
+    if _LOCATION_RE.search(location):
+        return True
+
+    # 2. HARD BLOCK: reject if location field contains non-target country/city
+    if location and _BLOCKED_LOCATIONS_RE.search(location):
+        return False
+
+    # 3. Check allowlist on full text (title + description)
+    if _LOCATION_RE.search(text):
+        return True
+
+    # 4. US-qualified remote (must mention US/USA/United States near "remote")
+    if _REMOTE_US_RE.search(text) or _REMOTE_US_RE2.search(text):
+        return True
+
+    return False
 
 
 # ---------------------------------------------------------------------------

@@ -35,7 +35,7 @@ SEARCH_TITLES = [
     "Senior Product Manager",
 ]
 
-LOCATIONS = ["Seattle", "Remote", "Whidbey Island"]
+LOCATIONS = ["Seattle", "Pittsburgh", "Whidbey Island", "Remote"]
 RESULTS_PER_PAGE = 50
 MAX_PAGES = 5
 REQUEST_DELAY_SECONDS = 1.0
@@ -91,22 +91,26 @@ def _parse_result(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _is_remote_or_seattle(result: dict[str, Any]) -> bool:
-    """Return True if the listing looks remote or Seattle-area."""
+def _matches_target_location(result: dict[str, Any]) -> bool:
+    """Return True if the listing is in a target location."""
     location_name = (
         (result.get("location", {}) or {}).get("display_name", "")
     ).lower()
-    title = result.get("title", "").lower()
-    description = (result.get("description", "") or "").lower()
 
-    pnw_signals = ["seattle", "bellevue", "redmond", "whidbey", "oak harbor", "everett"]
-    if any(s in location_name for s in pnw_signals):
+    target_cities = [
+        "seattle", "bellevue", "redmond", "kirkland", "bothell",
+        "renton", "kent", "tacoma", "everett",
+        "whidbey", "oak harbor",
+        "pittsburgh",
+        "victoria",
+    ]
+    if any(s in location_name for s in target_cities):
         return True
 
-    remote_signals = ["remote", "work from home", "anywhere"]
-    for signal in remote_signals:
-        if signal in location_name or signal in title or signal in description[:500]:
-            return True
+    # Adzuna US API returns mostly US jobs, so "remote" here is likely US
+    # (main.py's stricter filter will catch any non-US remote that slips through)
+    if "remote" in location_name or "work from home" in location_name:
+        return True
 
     return False
 
@@ -145,7 +149,7 @@ def search_jobs() -> list[dict[str, Any]]:
                 break
 
             for result in results:
-                if not _is_remote_or_seattle(result):
+                if not _matches_target_location(result):
                     continue
                 parsed = _parse_result(result)
                 if parsed["url"] and parsed["url"] not in seen_urls:
