@@ -332,6 +332,18 @@ def get_llm_cache(conn: sqlite3.Connection, jid: str) -> dict[str, Any] | None:
     return None
 
 
+def get_all_llm_cache(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
+    """Return all cached LLM responses as {job_id: response_dict}."""
+    rows = conn.execute("SELECT job_id, response FROM llm_cache").fetchall()
+    result = {}
+    for row in rows:
+        try:
+            result[row["job_id"]] = json.loads(row["response"])
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return result
+
+
 def set_llm_cache(conn: sqlite3.Connection, jid: str, response: dict[str, Any]) -> None:
     """Cache an LLM response for a job."""
     now = datetime.now(timezone.utc).isoformat()

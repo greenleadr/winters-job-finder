@@ -22,6 +22,14 @@ CREATE TABLE IF NOT EXISTS tracking (
     notes     TEXT NOT NULL DEFAULT '',
     updated   TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS feedback (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id    TEXT NOT NULL,
+    field     TEXT NOT NULL,
+    rating    TEXT NOT NULL,
+    created   TEXT NOT NULL
+);
 """
 
 _VALID_STATUSES = {"applied", "interviewing", "offer", "rejected", "withdrawn"}
@@ -86,3 +94,51 @@ def get_by_status(conn: sqlite3.Connection, status: str) -> list[dict[str, Any]]
         (status,),
     ).fetchall()
     return [dict(row) for row in rows]
+
+
+# ---------------------------------------------------------------------------
+# Feedback
+# ---------------------------------------------------------------------------
+
+_VALID_FIELDS = {"recommendation", "score", "match"}
+_VALID_RATINGS = {"accurate", "inaccurate"}
+
+
+def add_feedback(
+    conn: sqlite3.Connection,
+    job_id: str,
+    field: str,
+    rating: str,
+) -> None:
+    if field not in _VALID_FIELDS:
+        raise ValueError(f"Invalid field '{field}'. Must be one of: {sorted(_VALID_FIELDS)}")
+    if rating not in _VALID_RATINGS:
+        raise ValueError(f"Invalid rating '{rating}'. Must be one of: {sorted(_VALID_RATINGS)}")
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO feedback (job_id, field, rating, created) VALUES (?, ?, ?, ?)",
+        (job_id, field, rating, now),
+    )
+    conn.commit()
+
+
+def get_feedback_for_job(conn: sqlite3.Connection, job_id: str) -> list[dict[str, Any]]:
+    rows = conn.execute(
+        "SELECT * FROM feedback WHERE job_id = ? ORDER BY created DESC",
+        (job_id,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_feedback_stats(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
+    """Return {field: {accurate: N, inaccurate: N}} aggregate stats."""
+    rows = conn.execute(
+        "SELECT field, rating, COUNT(*) as cnt FROM feedback GROUP BY field, rating"
+    ).fetchall()
+    stats: dict[str, dict[str, int]] = {}
+    for row in rows:
+        f = row["field"]
+        if f not in stats:
+            stats[f] = {"accurate": 0, "inaccurate": 0}
+        stats[f][row["rating"]] = row["cnt"]
+    return stats
