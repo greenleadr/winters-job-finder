@@ -2,7 +2,7 @@
 
 > Last updated: 2026-04-02
 
-## Current Iteration: v2.1
+## Current Iteration: v2.2
 
 ### What Works
 - **5 collectors**: Adzuna (12 titles x 3 locations), career pages (125 queryable companies via Greenhouse/Lever/Ashby APIs), Remotive (3 categories), HN Who's Hiring (monthly thread)

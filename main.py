@@ -311,6 +311,20 @@ def run() -> None:
     except Exception:
         pass
 
+    # 9a3. Log companies from Adzuna not in our target list (for future expansion)
+    try:
+        from scorer import _load_target_companies
+        known = _load_target_companies()
+        new_companies = set()
+        for j in raw_jobs:
+            co = j.get("company", "").strip()
+            if co and co.lower() not in known and j.get("source") == "adzuna":
+                new_companies.add(co)
+        if new_companies:
+            print(f"  Discovered {len(new_companies)} new companies from Adzuna (not in target list)", file=sys.stderr)
+    except Exception:
+        pass
+
     # 9b. Detect closed jobs (no longer in current collection)
     current_keys = {
         f"{j.get('title', '').lower().strip()}|{j.get('company', '').lower().strip()}"
