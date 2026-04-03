@@ -91,6 +91,27 @@ def process_feedback(title: str, body: str, issue_num: str) -> bool:
     return True
 
 
+def process_favorite(title: str, body: str, issue_num: str) -> bool:
+    """Parse and process a [FAVORITE] issue."""
+    m = re.match(r"\[FAVORITE\]\s+(\w+)\s+(add|remove)", title)
+    if not m:
+        print(f"Could not parse FAVORITE title: {title}", file=sys.stderr)
+        return False
+
+    job_id = m.group(1)
+    action = m.group(2)
+
+    track_conn = tracking.init_tracking()
+    if action == "add":
+        tracking.add_favorite(track_conn, job_id)
+        print(f"FAVORITE: added {job_id}")
+    else:
+        tracking.remove_favorite(track_conn, job_id)
+        print(f"FAVORITE: removed {job_id}")
+    track_conn.close()
+    return True
+
+
 def main():
     title = os.environ.get("ISSUE_TITLE", "")
     body = os.environ.get("ISSUE_BODY", "")
@@ -104,6 +125,8 @@ def main():
         ok = process_track(title, body, issue_num)
     elif title.startswith("[FEEDBACK]"):
         ok = process_feedback(title, body, issue_num)
+    elif title.startswith("[FAVORITE]"):
+        ok = process_favorite(title, body, issue_num)
     else:
         print(f"Unknown issue type: {title}", file=sys.stderr)
         ok = False

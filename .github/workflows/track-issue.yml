@@ -17,7 +17,7 @@ permissions:
 jobs:
   process-issue:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.issue.title, '[TRACK]') || startsWith(github.event.issue.title, '[FEEDBACK]')
+    if: startsWith(github.event.issue.title, '[TRACK]') || startsWith(github.event.issue.title, '[FEEDBACK]') || startsWith(github.event.issue.title, '[FAVORITE]')
 
     steps:
       - name: Checkout repository

@@ -217,7 +217,12 @@ def run() -> None:
     raw_jobs = [j for j in raw_jobs if _is_recent(j)]
     print(f"After age filter (≤{MAX_JOB_AGE_DAYS}d): {len(raw_jobs)}", file=sys.stderr)
 
-    # 2c. Collapse same title+company (Greenhouse multi-location dupes)
+    # 2c. Normalize titles (Sr. PM → Senior Product Manager, etc.)
+    from db import _normalize_title
+    for j in raw_jobs:
+        j["title"] = _normalize_title(j.get("title", ""))
+
+    # 2d. Collapse same title+company (Greenhouse multi-location dupes)
     raw_jobs = _dedupe_by_title_company(raw_jobs)
     print(f"After title+company dedup: {len(raw_jobs)}", file=sys.stderr)
 
@@ -297,6 +302,14 @@ def run() -> None:
     saved_new = db.save_jobs(conn, raw_jobs)
     # Update scores for the filtered/scored subset
     db.save_jobs(conn, scored)
+
+    # 9a2. Save company intel from career pages
+    try:
+        from collectors.career_pages import get_company_intel
+        for co_name, intel in get_company_intel().items():
+            db.save_company_intel(conn, co_name, intel["total_roles"], intel["product_roles"])
+    except Exception:
+        pass
 
     # 9b. Detect closed jobs (no longer in current collection)
     current_keys = {

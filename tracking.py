@@ -23,6 +23,11 @@ CREATE TABLE IF NOT EXISTS tracking (
     updated   TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS favorites (
+    job_id    TEXT PRIMARY KEY,
+    created   TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS feedback (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id    TEXT NOT NULL,
@@ -142,3 +147,28 @@ def get_feedback_stats(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
             stats[f] = {"accurate": 0, "inaccurate": 0}
         stats[f][row["rating"]] = row["cnt"]
     return stats
+
+
+# ---------------------------------------------------------------------------
+# Favorites / Shortlist
+# ---------------------------------------------------------------------------
+
+def add_favorite(conn: sqlite3.Connection, job_id: str) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO favorites (job_id, created) VALUES (?, ?) "
+        "ON CONFLICT(job_id) DO NOTHING",
+        (job_id, now),
+    )
+    conn.commit()
+
+
+def remove_favorite(conn: sqlite3.Connection, job_id: str) -> bool:
+    result = conn.execute("DELETE FROM favorites WHERE job_id = ?", (job_id,))
+    conn.commit()
+    return result.rowcount > 0
+
+
+def get_all_favorites(conn: sqlite3.Connection) -> set[str]:
+    rows = conn.execute("SELECT job_id FROM favorites").fetchall()
+    return {row["job_id"] for row in rows}

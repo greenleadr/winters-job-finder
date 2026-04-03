@@ -81,6 +81,13 @@ CREATE TABLE IF NOT EXISTS jobs (
     salary_max  INTEGER
 );
 
+CREATE TABLE IF NOT EXISTS company_intel (
+    company     TEXT PRIMARY KEY,
+    total_roles INTEGER DEFAULT 0,
+    product_roles INTEGER DEFAULT 0,
+    last_updated TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS llm_cache (
     job_id   TEXT PRIMARY KEY,
     response TEXT NOT NULL,
@@ -331,6 +338,98 @@ def get_llm_cache(conn: sqlite3.Connection, jid: str) -> dict[str, Any] | None:
             return None
     return None
 
+
+# ---------------------------------------------------------------------------
+# Salary Benchmarking
+# ---------------------------------------------------------------------------
+
+def get_salary_benchmarks(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
+    """Aggregate salary data by normalized title.
+
+    Returns {title: {count, avg_min, avg_max, min_min, max_max}}.
+    """
+    rows = conn.execute(
+        "SELECT title, salary_min, salary_max FROM jobs "
+        "WHERE salary_min IS NOT NULL AND salary_max IS NOT NULL "
+        "AND salary_min > 0 AND salary_max > 0"
+    ).fetchall()
+
+    buckets: dict[str, list[tuple[int, int]]] = {}
+    for row in rows:
+        t = _normalize_title(row["title"])
+        buckets.setdefault(t, []).append((row["salary_min"], row["salary_max"]))
+
+    result: dict[str, dict[str, Any]] = {}
+    for title, salaries in sorted(buckets.items(), key=lambda x: -len(x[1])):
+        mins = [s[0] for s in salaries]
+        maxs = [s[1] for s in salaries]
+        result[title] = {
+            "count": len(salaries),
+            "avg_min": sum(mins) // len(mins),
+            "avg_max": sum(maxs) // len(maxs),
+            "min_min": min(mins),
+            "max_max": max(maxs),
+        }
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Title Normalization
+# ---------------------------------------------------------------------------
+
+import re as _re
+
+_TITLE_NORMALIZATIONS = [
+    (_re.compile(r"\bSr\.?\s+", _re.I), "Senior "),
+    (_re.compile(r"\bJr\.?\s+", _re.I), "Junior "),
+    (_re.compile(r"\bMgr\.?\b", _re.I), "Manager"),
+    (_re.compile(r"\bDir\.(?=\s|$)", _re.I), "Director"),
+    (_re.compile(r"\bProd\.(?=\s|$)", _re.I), "Product"),
+    (_re.compile(r"\bMgmt\.(?=\s|$)", _re.I), "Management"),
+    (_re.compile(r"\bEng\.(?=\s|$)", _re.I), "Engineering"),
+    (_re.compile(r"\bPM\b"), "Product Manager"),
+    (_re.compile(r"\bGPM\b"), "Group Product Manager"),
+    (_re.compile(r"\bSPM\b"), "Senior Product Manager"),
+    (_re.compile(r"\s+", _re.I), " "),
+]
+
+
+def _normalize_title(title: str) -> str:
+    """Normalize job title variations to canonical forms."""
+    t = title.strip()
+    for pattern, replacement in _TITLE_NORMALIZATIONS:
+        t = pattern.sub(replacement, t)
+    return t.strip()
+
+
+# ---------------------------------------------------------------------------
+# Company Intelligence
+# ---------------------------------------------------------------------------
+
+def save_company_intel(
+    conn: sqlite3.Connection,
+    company: str,
+    total_roles: int,
+    product_roles: int,
+) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO company_intel (company, total_roles, product_roles, last_updated) "
+        "VALUES (?, ?, ?, ?) ON CONFLICT(company) DO UPDATE SET "
+        "total_roles = ?, product_roles = ?, last_updated = ?",
+        (company, total_roles, product_roles, now, total_roles, product_roles, now),
+    )
+    conn.commit()
+
+
+def get_company_intel(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
+    rows = conn.execute("SELECT * FROM company_intel ORDER BY product_roles DESC").fetchall()
+    return {row["company"]: dict(row) for row in rows}
+
+
+# ---------------------------------------------------------------------------
+# LLM Cache
+# ---------------------------------------------------------------------------
 
 def get_all_llm_cache(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
     """Return all cached LLM responses as {job_id: response_dict}."""
