@@ -49,6 +49,7 @@ _COLLECTORS: list[tuple[str, str]] = [
     ("career_pages", "collectors.career_pages"),
     ("remotive", "collectors.remotive"),
     ("hn_hiring", "collectors.hn_hiring"),
+    ("gov_jobs", "collectors.gov_jobs"),
 ]
 
 # Target location allowlist — specific cities/regions we want
@@ -59,6 +60,11 @@ _LOCATION_RE = re.compile(
     r"|pittsburgh"
     r"|victoria\s*,?\s*(?:b\.?c\.?|british\s+columbia)"
     r"|british\s+columbia"
+    r"|island\s+county|skagit\s+county|snohomish\s+county"
+    r"|oak\s+harbor|anacortes|coupeville|langley|freeland"
+    r"|mount\s+vernon|burlington|sedro[- ]woolley|la\s+conner"
+    r"|marysville|lake\s+stevens|snohomish|stanwood|arlington"
+    r"|lynnwood|edmonds|mukilteo|mountlake\s+terrace"
     r")\b",
     re.I,
 )

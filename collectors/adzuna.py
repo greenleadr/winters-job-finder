@@ -35,7 +35,7 @@ SEARCH_TITLES = [
     "Senior Product Manager",
 ]
 
-LOCATIONS = ["Seattle", "Pittsburgh", "Whidbey Island", "Remote"]
+LOCATIONS = ["Seattle", "Pittsburgh", "Whidbey Island", "Mount Vernon", "Everett", "Remote"]
 RESULTS_PER_PAGE = 50
 MAX_PAGES = 5
 REQUEST_DELAY_SECONDS = 1.0
