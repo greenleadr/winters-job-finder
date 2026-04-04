@@ -496,7 +496,7 @@ function runEvaluate() {
   html += `<div style="margin-bottom:8px;"><span style="color:#e2e8f0;font-size:13px;font-weight:600;">Matched (${r.matched.length}):</span> `;
   html += r.matched.map(s => pill(s)).join('');
   html += `</div>`;
-  html += `<div style="margin-bottom:12px;"><span style="color:#e2e8f0;font-size:13px;font-weight:600;">Gaps (${r.gaps.length}):</span> `;
+  html += `<div style="margin-bottom:12px;"><span style="color:#e2e8f0;font-size:13px;font-weight:600;">Not in JD (${r.gaps.length}):</span> `;
   html += r.gaps.slice(0, 8).map(s => pill(s, '#3b1818', '#fca5a5')).join('');
   if (r.gaps.length > 8) html += ` <span style="color:#64748b;font-size:11px;">+${r.gaps.length-8}</span>`;
   html += `</div>`;
