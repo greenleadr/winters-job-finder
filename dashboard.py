@@ -55,6 +55,15 @@ def _bar_chart_row(label: str, count: int, max_count: int, color: str) -> str:
     )
 
 
+def _parse_json_field(raw: Any) -> list:
+    if isinstance(raw, list):
+        return raw
+    try:
+        return json.loads(raw) if isinstance(raw, str) else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
 def _build_jobs_json(
     all_jobs: list[dict[str, Any]],
     overrides: dict[str, dict[str, str]],
@@ -116,6 +125,7 @@ def _build_jobs_json(
             "salary_min": j.get("salary_min"),
             "salary_max": j.get("salary_max"),
             "desc_preview": desc[:400],
+            "tags": _parse_json_field(j.get("tags", "[]")),
             "llm": llm if llm else None,
             "tracking": {"status": ov.get("status"), "notes": ov.get("notes", ""), "updated": ov.get("updated", "")} if ov else None,
             "feedback": [{"field": f.get("field"), "rating": f.get("rating")} for f in fb] if fb else [],
@@ -248,8 +258,11 @@ def generate_dashboard(conn: sqlite3.Connection, run_date: date | None = None) -
 const REPO = '""" + REPO + """';
 const JOBS = """ + jobs_json_str + """;
 const PROFILE = """ + profile_json_str + """;
+const TAG_COLORS = {"Amazon":"#ff9900","FAANG":"#f59e0b","Government":"#2563eb","Director+":"#7c3aed","Compliance":"#059669","AI Role":"#ec4899","Leadership":"#8b5cf6","Remote":"#06b6d4","Seattle":"#10b981","$200K+":"#22c55e"};
 let displayCount = 50;
 let expandedId = null;
+let sortField = 'score';
+let sortDir = 'desc';
 
 function scoreColor(s) {
   if (s >= 70) return '#22c55e';
@@ -260,6 +273,22 @@ function scoreColor(s) {
 function statusDot(s) {
   const m = {open:'\\u{1F7E2}',closed:'\\u{1F534}',applied:'\\u{1F535}',interviewing:'\\u{1F7E3}',offer:'\\u{2B50}',rejected:'\\u{26D4}',withdrawn:'\\u{2B1C}'};
   return m[s] || '\\u{2753}';
+}
+
+function tagPill(tag) {
+  const bg = TAG_COLORS[tag] || '#64748b';
+  return `<span style="display:inline-block;background:${bg};color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin:0 4px 4px 0;">${esc(tag)}</span>`;
+}
+
+function setSort(field) {
+  if (sortField === field) { sortDir = sortDir === 'desc' ? 'asc' : 'desc'; }
+  else { sortField = field; sortDir = field === 'score' ? 'desc' : 'asc'; }
+  displayCount = 50; expandedId = null; render();
+}
+
+function sortArrow(field) {
+  if (sortField !== field) return '';
+  return sortDir === 'desc' ? ' ▼' : ' ▲';
 }
 
 function pill(text, bg='#1e3a5f', fg='#7dd3fc') {
@@ -277,22 +306,25 @@ function getFiltered() {
   const scoreMin = parseInt(document.getElementById('filter-score').value) || 0;
   const status = document.getElementById('filter-status').value;
   const source = document.getElementById('filter-source').value;
-  const sortBy = document.getElementById('sort-by').value;
+  const selectedTags = [...document.getElementById('filter-tags').selectedOptions].map(o => o.value).filter(v => v);
 
   let jobs = JOBS.filter(j => {
     if (q && !j.title.toLowerCase().includes(q) && !j.company.toLowerCase().includes(q)) return false;
     if (j.score < scoreMin) return false;
     if (status && (j.tracking ? j.tracking.status : j.status) !== status) return false;
     if (source && j.source !== source) return false;
+    if (selectedTags.length && !selectedTags.every(tag => (j.tags || []).includes(tag))) return false;
     return true;
   });
 
-  if (sortBy === 'score-desc') jobs.sort((a,b) => b.score - a.score);
-  else if (sortBy === 'score-asc') jobs.sort((a,b) => a.score - b.score);
-  else if (sortBy === 'date-desc') jobs.sort((a,b) => b.first_seen.localeCompare(a.first_seen));
-  else if (sortBy === 'date-asc') jobs.sort((a,b) => a.first_seen.localeCompare(b.first_seen));
-  else if (sortBy === 'company-asc') jobs.sort((a,b) => a.company.localeCompare(b.company));
-  else if (sortBy === 'salary-desc') jobs.sort((a,b) => (b.salary_max||0) - (a.salary_max||0));
+  // Sort using sortField/sortDir (set by column headers or dropdown)
+  const dir = sortDir === 'desc' ? -1 : 1;
+  if (sortField === 'score') jobs.sort((a,b) => dir * (a.score - b.score));
+  else if (sortField === 'title') jobs.sort((a,b) => dir * a.title.localeCompare(b.title));
+  else if (sortField === 'source') jobs.sort((a,b) => dir * a.source.localeCompare(b.source));
+  else if (sortField === 'date') jobs.sort((a,b) => dir * a.first_seen.localeCompare(b.first_seen));
+  else if (sortField === 'company') jobs.sort((a,b) => dir * a.company.localeCompare(b.company));
+  else if (sortField === 'salary') jobs.sort((a,b) => dir * ((a.salary_max||0) - (b.salary_max||0)));
 
   return jobs;
 }
@@ -314,11 +346,13 @@ function render() {
     const extra = (j.matched_skills||[]).length > 6 ? ` <span style="color:#64748b;font-size:11px;">+${j.matched_skills.length-6}</span>` : '';
     const flags = (j.flags||[]).slice(0,3).map(f => pill(f,'#3b1818','#fca5a5')).join('');
     const sal = j.salary_min && j.salary_max ? `<span style="background:#065f46;color:#6ee7b7;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;margin-left:8px;">$${Math.round(j.salary_min/1000)}K\\u2013$${Math.round(j.salary_max/1000)}K</span>` : '';
+    const tagsHtml = (j.tags || []).map(t => tagPill(t)).join('');
 
     html += `<tr style="border-bottom:1px solid #1e293b;cursor:pointer;" onclick="toggle('${j.id}')">
       <td style="padding:12px 16px;vertical-align:top;">
         <div><a href="${esc(j.url)}" target="_blank" onclick="event.stopPropagation()" style="color:#60a5fa;font-size:14px;font-weight:600;text-decoration:none;">${esc(j.title)}</a>${sal}</div>
         <div style="color:#94a3b8;font-size:13px;">${esc(j.company)} <span style="color:#64748b;margin-left:8px;">${esc(j.location)}</span></div>
+        ${tagsHtml ? `<div style="margin-top:4px;">${tagsHtml}</div>` : ''}
         <div style="margin-top:4px;">${skills}${extra}</div>
         ${flags ? `<div style="margin-top:4px;">${flags}</div>` : ''}
       </td>
@@ -538,7 +572,22 @@ function clientScore(title, company, description) {
   const raw = titlePts + skillPts + expPts + indPts + penalty + companyBoost + descBoost;
   const score = Math.max(raw, 0);
 
-  return { score, titlePts, skillPts, expPts, indPts, penalty, companyBoost, descBoost, matched, gaps, flags };
+  // Compute tags
+  const tags = [];
+  const titleInput = document.getElementById('eval-title').value.trim();
+  const companyInput = document.getElementById('eval-company').value.trim();
+  const locInput = (document.getElementById('eval-location').value || '').toLowerCase();
+  const coLower = companyInput.toLowerCase();
+  if (coLower.includes('amazon')) tags.push('Amazon');
+  if (['amazon','apple','google','microsoft','meta'].some(f => coLower.includes(f))) tags.push('FAANG');
+  if (/director|vp\b|vice president|head of|senior director/i.test(titleInput)) tags.push('Director+');
+  if (matched.some(s => ['compliance','grc','privacy','pci dss','ccpa'].includes(s.toLowerCase()))) tags.push('Compliance');
+  if (matched.some(s => ['ai/ml','machine learning','computer vision'].includes(s.toLowerCase())) || /artificial intelligence|llm|generative ai|genai/.test(desc)) tags.push('AI Role');
+  if (matched.some(s => s.toLowerCase() === 'people leadership') || /direct reports|manage a team|managing a team/.test(desc)) tags.push('Leadership');
+  if (/remote/.test(locInput) && !/india|uk|emea|europe/.test(locInput)) tags.push('Remote');
+  if (['seattle','bellevue','redmond','kirkland','everett'].some(c => locInput.includes(c))) tags.push('Seattle');
+
+  return { score, titlePts, skillPts, expPts, indPts, penalty, companyBoost, descBoost, matched, gaps, flags, tags };
 }
 
 function runEvaluate() {
@@ -558,6 +607,9 @@ function runEvaluate() {
   html += `Title: ${r.titlePts}/30 &middot; Skills: ${r.skillPts}/40 &middot; Experience: ${r.expPts}/15 &middot; Industry: ${r.indPts}/15 &middot; Company: +${r.companyBoost} &middot; Desc: +${r.descBoost}`;
   if (r.penalty) html += ` &middot; <span style="color:#ef4444;">Penalty: ${r.penalty}</span>`;
   html += `</div>`;
+  if (r.tags && r.tags.length) {
+    html += `<div style="margin-bottom:8px;">${r.tags.map(t => tagPill(t)).join('')}</div>`;
+  }
   if (r.flags.length) {
     html += `<div style="margin-bottom:8px;">`;
     html += r.flags.map(f => pill(f, '#3b1818', '#fca5a5')).join('');
@@ -599,8 +651,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const sel = document.getElementById('filter-source');
   sources.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
 
+  // Populate tags dropdown
+  const allTags = [...new Set(JOBS.flatMap(j => j.tags || []))].sort();
+  const tagSel = document.getElementById('filter-tags');
+  allTags.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; tagSel.appendChild(o); });
+
   // Wire up filters
-  ['search','filter-score','filter-status','filter-source','sort-by'].forEach(id => {
+  ['search','filter-score','filter-status','filter-source','filter-tags','sort-by'].forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener(id === 'search' ? 'input' : 'change', () => { displayCount = 50; expandedId = null; render(); });
   });
@@ -707,6 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <option value="rejected">Rejected</option>
         </select>
         <select id="filter-source"><option value="">All Sources</option></select>
+        <select id="filter-tags" multiple size="1" style="min-width:100px;"><option value="">Tags</option></select>
         <select id="sort-by">
           <option value="score-desc">Score (High to Low)</option>
           <option value="score-asc">Score (Low to High)</option>
@@ -721,10 +779,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <table>
           <thead>
             <tr>
-              <th>Job</th>
-              <th style="text-align:center;">Score</th>
-              <th style="text-align:center;">Source</th>
-              <th style="text-align:center;">Status</th>
+              <th onclick="setSort('title')" style="cursor:pointer;" id="th-title">Job</th>
+              <th onclick="setSort('score')" style="text-align:center;cursor:pointer;" id="th-score">Score ▼</th>
+              <th onclick="setSort('source')" style="text-align:center;cursor:pointer;" id="th-source">Source</th>
+              <th onclick="setSort('date')" style="text-align:center;cursor:pointer;" id="th-date">Status</th>
             </tr>
           </thead>
           <tbody id="job-table-body"></tbody>

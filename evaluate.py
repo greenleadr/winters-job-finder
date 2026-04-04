@@ -84,6 +84,10 @@ def format_result(result: dict[str, Any]) -> str:
         lines.append(f"**Salary**: ${t1['salary_min']//1000}K–${t1['salary_max']//1000}K")
         lines.append("")
 
+    if t1.get("tags"):
+        lines.append(f"**Tags**: {', '.join(t1['tags'])}")
+        lines.append("")
+
     lines.append(f"**Matched Skills** ({len(t1['matched_skills'])}): {', '.join(t1['matched_skills'])}")
     lines.append("")
     lines.append(f"**Not in JD** ({len(t1['gaps'])}): {', '.join(t1['gaps'][:10])}")

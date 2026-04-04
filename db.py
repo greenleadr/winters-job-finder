@@ -102,6 +102,7 @@ _MIGRATIONS = [
     "ALTER TABLE jobs ADD COLUMN status TEXT NOT NULL DEFAULT 'open'",
     "ALTER TABLE jobs ADD COLUMN salary_min INTEGER",
     "ALTER TABLE jobs ADD COLUMN salary_max INTEGER",
+    "ALTER TABLE jobs ADD COLUMN tags TEXT DEFAULT '[]'",
 ]
 
 
@@ -175,6 +176,7 @@ def save_jobs(
         score_val = score_data.get("score")
         salary_min = score_data.get("salary_min")
         salary_max = score_data.get("salary_max")
+        tags_json = json.dumps(score_data.get("tags", []))
 
         existing = conn.execute("SELECT 1 FROM jobs WHERE id = ?", (jid,)).fetchone()
         if existing:
@@ -183,9 +185,9 @@ def save_jobs(
                 conn.execute(
                     "UPDATE jobs SET last_seen = ?, score = ?, matched_skills = ?, "
                     "flags = ?, salary_min = COALESCE(?, salary_min), "
-                    "salary_max = COALESCE(?, salary_max) WHERE id = ?",
+                    "salary_max = COALESCE(?, salary_max), tags = ? WHERE id = ?",
                     (now, score_val, matched_json, flags_json,
-                     salary_min, salary_max, jid),
+                     salary_min, salary_max, tags_json, jid),
                 )
             else:
                 conn.execute(
@@ -197,8 +199,8 @@ def save_jobs(
                 """INSERT INTO jobs
                    (id, title, company, location, url, description,
                     source, date_posted, score, matched_skills, flags,
-                    first_seen, last_seen, salary_min, salary_max)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    first_seen, last_seen, salary_min, salary_max, tags)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     jid,
                     job.get("title", ""),
@@ -215,6 +217,7 @@ def save_jobs(
                     now,
                     salary_min,
                     salary_max,
+                    tags_json,
                 ),
             )
             inserted += 1

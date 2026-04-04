@@ -329,6 +329,91 @@ def _extract_salary(text: str) -> tuple[int | None, int | None]:
 
 
 # ---------------------------------------------------------------------------
+# 7. Auto-tagging
+# ---------------------------------------------------------------------------
+
+TAG_COLORS = {
+    "Amazon": "#ff9900",
+    "FAANG": "#f59e0b",
+    "Government": "#2563eb",
+    "Director+": "#7c3aed",
+    "Compliance": "#059669",
+    "AI Role": "#ec4899",
+    "Leadership": "#8b5cf6",
+    "Remote": "#06b6d4",
+    "Seattle": "#10b981",
+    "$200K+": "#22c55e",
+}
+
+
+def compute_tags(
+    title: str,
+    company: str,
+    description: str,
+    source: str,
+    matched_skills: list[str],
+    salary_max: int | None,
+    location: str,
+) -> list[str]:
+    """Auto-assign tags based on job attributes."""
+    tags: list[str] = []
+    t = title.lower()
+    co = company.lower()
+    desc = (description or "").lower()
+    loc = (location or "").lower()
+    skills_set = {s.lower() for s in (matched_skills or [])}
+
+    # Amazon
+    if "amazon" in co:
+        tags.append("Amazon")
+
+    # FAANG / Big Tech
+    faang = {"amazon", "apple", "google", "microsoft", "meta"}
+    if any(f in co for f in faang):
+        if "FAANG" not in tags:
+            tags.append("FAANG")
+
+    # Government
+    if source == "gov_jobs":
+        tags.append("Government")
+
+    # Director+
+    if re.search(r"\b(director|vp\b|vice\s+president|head\s+of|senior\s+director|associate\s+director)\b", t, re.I):
+        tags.append("Director+")
+
+    # Compliance
+    if skills_set & {"compliance", "grc", "privacy", "pci dss", "ccpa"}:
+        tags.append("Compliance")
+
+    # AI Role
+    ai_skills = skills_set & {"ai/ml", "machine learning", "computer vision"}
+    ai_desc = any(kw in desc for kw in ["artificial intelligence", "llm", "generative ai", "genai", "large language model"])
+    if ai_skills or ai_desc:
+        tags.append("AI Role")
+
+    # People Leadership
+    leadership_skills = "people leadership" in skills_set
+    leadership_desc = any(kw in desc for kw in ["direct reports", "manage a team", "managing a team", "lead a team", "org of"])
+    if leadership_skills or leadership_desc:
+        tags.append("Leadership")
+
+    # Remote
+    if re.search(r"remote", loc) and not re.search(r"india|uk|emea|europe|worldwide", loc):
+        tags.append("Remote")
+
+    # Seattle Area
+    seattle_cities = ["seattle", "bellevue", "redmond", "kirkland", "everett", "bothell", "renton", "tacoma"]
+    if any(c in loc for c in seattle_cities):
+        tags.append("Seattle")
+
+    # High Salary
+    if salary_max and salary_max >= 200000:
+        tags.append("$200K+")
+
+    return tags
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -403,6 +488,10 @@ def score_job(
         "flags": flags,
         "salary_min": salary_min,
         "salary_max": salary_max,
+        "tags": compute_tags(
+            title, company, desc, job.get("source", ""),
+            matched_skills, salary_max, job.get("location", ""),
+        ),
     }
 
 

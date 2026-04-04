@@ -16,9 +16,20 @@ from typing import Any
 
 TOP_N = 10
 
+from scorer import TAG_COLORS
+
 
 def _esc(text: str) -> str:
     return html.escape(text, quote=True)
+
+
+def _tag_pill(tag: str) -> str:
+    bg = TAG_COLORS.get(tag, "#64748b")
+    return (
+        f'<span style="display:inline-block;background:{bg};color:#fff;'
+        f'font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;'
+        f'margin:0 4px 4px 0;">{_esc(tag)}</span>'
+    )
 
 
 def _score_color(score: int) -> tuple[str, str]:
@@ -95,6 +106,10 @@ def _render_job_row(job: dict[str, Any], rank: int) -> str:
             f'margin-right:6px;">${salary_min // 1000}K+</span>'
         )
 
+    # Tags
+    tags = s.get("tags", [])
+    tags_html = " ".join(_tag_pill(t) for t in tags) if tags else ""
+
     meta_parts = [location]
     if source:
         meta_parts.append(source)
@@ -153,6 +168,7 @@ def _render_job_row(job: dict[str, Any], rank: int) -> str:
           <span style="color:#475569;font-size:14px;margin-left:8px;">{company}</span>
         </div>
         <div style="margin-bottom:6px;">{_score_bar(score)} {salary_html}</div>
+        {f'<div style="margin-bottom:6px;">{tags_html}</div>' if tags_html else ''}
         <div style="color:#64748b;font-size:13px;margin-bottom:6px;">{meta}</div>
         <div style="margin-bottom:4px;">{skills_html}</div>
         {f'<div style="margin-top:6px;">{flags_html}</div>' if flags_html else ''}
