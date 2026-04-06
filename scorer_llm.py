@@ -94,6 +94,91 @@ def _build_prompt(job: dict[str, Any], profile: dict[str, Any]) -> str:
     )
 
 
+def _parse_llm_json(text: str) -> dict[str, Any]:
+    """Parse JSON from Claude's response, handling common formatting issues."""
+    import re as _re
+
+    text = text.strip()
+
+    # Strip markdown code fences (```json ... ``` or ``` ... ```)
+    if text.startswith("```"):
+        # Remove opening fence line
+        text = _re.sub(r"^```(?:json)?\s*\n?", "", text)
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+
+    # Try direct parse first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Extract JSON object from surrounding text
+    # Find the first { and last }
+    start = text.find("{")
+    end = text.rfind("}")
+    if start >= 0 and end > start:
+        json_str = text[start:end + 1]
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError:
+            pass
+
+        # Attempt repairs on the extracted JSON
+        repaired = json_str
+        # Fix unescaped newlines inside strings
+        repaired = _re.sub(r'(?<=": ")(.*?)(?="[,}])', lambda m: m.group(0).replace("\n", "\\n"), repaired, flags=_re.DOTALL)
+        # Fix trailing commas before } or ]
+        repaired = _re.sub(r",\s*([}\]])", r"\1", repaired)
+        # Fix single quotes used instead of double quotes
+        # (only outside of already-double-quoted strings)
+        try:
+            return json.loads(repaired)
+        except json.JSONDecodeError:
+            pass
+
+        # Last resort: try to extract key fields with regex
+        try:
+            score_m = _re.search(r'"llm_score"\s*:\s*(\d+)', json_str)
+            rec_m = _re.search(r'"recommendation"\s*:\s*"(Apply|Maybe|Skip)"', json_str)
+            if score_m and rec_m:
+                return {
+                    "llm_score": int(score_m.group(1)),
+                    "recommendation": rec_m.group(1),
+                    "strengths": _extract_list(json_str, "strengths"),
+                    "concerns": _extract_list(json_str, "concerns"),
+                    "salary_range": _extract_field(json_str, "salary_range"),
+                    "team_size": _extract_field(json_str, "team_size"),
+                    "reports_to": _extract_field(json_str, "reports_to"),
+                    "role_type": _extract_field(json_str, "role_type"),
+                }
+        except Exception:
+            pass
+
+    raise json.JSONDecodeError(f"Could not parse LLM response", text, 0)
+
+
+def _extract_list(text: str, key: str) -> list[str]:
+    """Extract a JSON array field by regex from malformed JSON."""
+    import re as _re
+    m = _re.search(rf'"{key}"\s*:\s*\[(.*?)\]', text, _re.DOTALL)
+    if m:
+        items = _re.findall(r'"([^"]*)"', m.group(1))
+        return items[:3]
+    return []
+
+
+def _extract_field(text: str, key: str) -> str | None:
+    """Extract a single JSON string field by regex."""
+    import re as _re
+    m = _re.search(rf'"{key}"\s*:\s*"([^"]*)"', text)
+    if m:
+        val = m.group(1)
+        return val if val.lower() != "null" else None
+    return None
+
+
 def _call_claude(prompt: str, api_key: str, retries: int = 2) -> dict[str, Any] | None:
     """Call the Claude API and parse the JSON response."""
     body = json.dumps({
@@ -120,14 +205,7 @@ def _call_claude(prompt: str, api_key: str, retries: int = 2) -> dict[str, Any] 
                 if block.get("type") == "text":
                     text += block.get("text", "")
             # Parse the JSON from Claude's response
-            # Strip any markdown fences if present
-            text = text.strip()
-            if text.startswith("```"):
-                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-                if text.endswith("```"):
-                    text = text[:-3]
-                text = text.strip()
-            return json.loads(text)
+            return _parse_llm_json(text)
         except HTTPError as exc:
             if exc.code == 429:
                 wait = 2 ** (attempt + 1)
