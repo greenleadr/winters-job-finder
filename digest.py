@@ -246,13 +246,33 @@ def generate_digest(
         key=lambda j: j.get("_score", {}).get("score", 0),
         reverse=True,
     )
-    top = jobs[:TOP_N]
+
+    # Separate Amazon jobs from the main list
+    amazon_jobs = [j for j in jobs if "amazon" in (j.get("company") or "").lower()]
+    non_amazon_jobs = [j for j in jobs if "amazon" not in (j.get("company") or "").lower()]
+
+    top = non_amazon_jobs[:TOP_N]
 
     strong = sum(1 for j in jobs if j.get("_score", {}).get("score", 0) >= 70)
     moderate = sum(1 for j in jobs if 50 <= j.get("_score", {}).get("score", 0) < 70)
 
-    # Build job rows
+    # Build job rows (non-Amazon only)
     rows_html = "\n".join(_render_job_row(j, i + 1) for i, j in enumerate(top))
+
+    # Build Amazon section as compact rows
+    amazon_compact = []
+    for j in amazon_jobs[:15]:
+        s = j.get("_score", {})
+        amazon_compact.append({
+            "title": j.get("title", ""),
+            "company": j.get("company", ""),
+            "location": j.get("location", ""),
+            "url": j.get("url", "#"),
+            "score": s.get("score", 0),
+        })
+    amazon_html = _render_section(
+        f"Amazon Jobs ({len(amazon_jobs)})", amazon_compact, icon="&#128230;"
+    ) if amazon_jobs else ""
 
     # Build extra sections
     still_open_html = _render_section(
@@ -316,6 +336,7 @@ def generate_digest(
       </table>
     </div>
 
+    {amazon_html}
     {still_open_html}
     {long_open_html}
     {closed_html}
