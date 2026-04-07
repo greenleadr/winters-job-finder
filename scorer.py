@@ -333,6 +333,7 @@ def _extract_salary(text: str) -> tuple[int | None, int | None]:
 # ---------------------------------------------------------------------------
 
 TAG_COLORS = {
+    "Referral": "#fbbf24",
     "Amazon": "#ff9900",
     "FAANG": "#f59e0b",
     "Government": "#2563eb",
@@ -354,6 +355,7 @@ def compute_tags(
     matched_skills: list[str],
     salary_max: int | None,
     location: str,
+    referrals: list[str] | None = None,
 ) -> list[str]:
     """Auto-assign tags based on job attributes."""
     tags: list[str] = []
@@ -361,6 +363,12 @@ def compute_tags(
     co = company.lower()
     desc = (description or "").lower()
     loc = (location or "").lower()
+
+    # Referral (highest priority — show first)
+    if referrals:
+        ref_set = {r.lower() for r in referrals}
+        if any(r in co for r in ref_set):
+            tags.append("Referral")
     skills_set = {s.lower() for s in (matched_skills or [])}
 
     # Amazon
@@ -464,10 +472,18 @@ def score_job(
     if target_companies and company.lower().strip() in target_companies:
         company_boost = 5
 
+    # Bonus: I have a referral at this company
+    referral_boost = 0
+    referrals = {r.lower() for r in profile.get("referrals", [])}
+    co_lower = company.lower().strip()
+    has_referral = any(r in co_lower for r in referrals)
+    if has_referral:
+        referral_boost = 10
+
     # Bonus: fuller descriptions are higher-quality postings
     desc_boost = 3 if len(desc) >= 500 else 0
 
-    final = max(raw + penalty + company_boost + desc_boost, 0)
+    final = max(raw + penalty + company_boost + referral_boost + desc_boost, 0)
 
     # Extract salary
     salary_min, salary_max = _extract_salary(desc)
@@ -480,6 +496,7 @@ def score_job(
             "experience": exp_pts,
             "industry": ind_pts,
             "company_boost": company_boost,
+            "referral_boost": referral_boost,
             "desc_boost": desc_boost,
             "penalty": penalty,
         },
@@ -491,7 +508,9 @@ def score_job(
         "tags": compute_tags(
             title, company, desc, job.get("source", ""),
             matched_skills, salary_max, job.get("location", ""),
+            profile.get("referrals", []),
         ),
+        "has_referral": has_referral,
     }
 
 
