@@ -1265,5 +1265,12 @@
     "careers_url": "https://job-boards.greenhouse.io/lacework",
     "location": "Remote",
     "notes": "Cloud security SaaS. Compliance, observability."
+  },
+  {
+    "name": "Axon",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/axon",
+    "location": "Seattle, WA / Remote",
+    "notes": "Public safety tech (TASER, body cams). S&P 500. Seattle office. AI/ML platform."
   }
 ]
