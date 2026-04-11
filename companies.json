@@ -1279,5 +1279,12 @@
     "careers_url": "https://evercommerce.wd1.myworkdayjobs.com/EverCommerce_Careers",
     "location": "Remote / Hybrid",
     "notes": "SaaS for service industries (home, health, fitness). NYSE listed. Remote-friendly."
+  },
+  {
+    "name": "Roku",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/Roku",
+    "location": "Remote / Hybrid",
+    "notes": "#1 TV streaming platform in US/Canada/Mexico. Ad tech, content platform, consumer hardware."
   }
 ]
