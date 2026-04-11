@@ -1286,5 +1286,96 @@
     "careers_url": "https://job-boards.greenhouse.io/Roku",
     "location": "Remote / Hybrid",
     "notes": "#1 TV streaming platform in US/Canada/Mexico. Ad tech, content platform, consumer hardware."
+  },
+  {
+    "name": "The Trade Desk",
+    "ats_type": "workday",
+    "careers_url": "https://thetradedesk.wd5.myworkdayjobs.com/TTDExternalSite",
+    "location": "Bellevue, WA",
+    "notes": "Programmatic ad tech leader. Bellevue HQ \u2014 local opportunity. Perfect ad tech alignment."
+  },
+  {
+    "name": "Sonos",
+    "ats_type": "workday",
+    "careers_url": "https://sonos.wd1.myworkdayjobs.com/Sonos",
+    "location": "Remote / Hybrid",
+    "notes": "Consumer audio hardware + platform. Product-led growth. Strong engineering culture."
+  },
+  {
+    "name": "Shield AI",
+    "ats_type": "lever",
+    "careers_url": "https://jobs.lever.co/shieldai",
+    "location": "Remote / Hybrid",
+    "notes": "Defense tech, AI autonomy. Similar to Anduril. Computer vision / ML focus."
+  },
+  {
+    "name": "Applied Intuition",
+    "ats_type": "greenhouse",
+    "careers_url": "https://boards.greenhouse.io/embed/job_board?for=appliedintuition",
+    "location": "Remote / Hybrid",
+    "notes": "AV / robotics simulation. Heavy AI/ML. Mountain View HQ, remote-friendly."
+  },
+  {
+    "name": "Hugging Face",
+    "ats_type": "workable",
+    "careers_url": "https://apply.workable.com/huggingface/",
+    "location": "Remote",
+    "notes": "AI/ML platform, open source. Remote-first. Hottest AI community."
+  },
+  {
+    "name": "Cresta",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/cresta",
+    "location": "Remote / Hybrid",
+    "notes": "AI for contact centers. Ties to Apple contact center background."
+  },
+  {
+    "name": "Magnite",
+    "ats_type": "workday",
+    "careers_url": "https://osv-rubicon.wd5.myworkdayjobs.com/MagniteCareers",
+    "location": "Remote / Hybrid",
+    "notes": "Largest independent CTV/video ad platform. Ad tech, NASDAQ (MGNI)."
+  },
+  {
+    "name": "Comscore",
+    "ats_type": "workday",
+    "careers_url": "https://comscore.wd5.myworkdayjobs.com/External",
+    "location": "Remote / Hybrid",
+    "notes": "Media measurement + analytics. Data-driven product focus."
+  },
+  {
+    "name": "Vizio",
+    "ats_type": "icims",
+    "careers_url": "https://careers-vizio.icims.com",
+    "location": "Remote / Hybrid",
+    "notes": "Smart TV platform (now Walmart-owned). Roku competitor."
+  },
+  {
+    "name": "Tubi",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/tubitv",
+    "location": "Remote / Hybrid",
+    "notes": "FAST streaming (Fox). 100M+ MAU. Product-led growth."
+  },
+  {
+    "name": "Wyze",
+    "ats_type": "breezy",
+    "careers_url": "https://wyze-labs.breezy.hr/",
+    "location": "Seattle, WA",
+    "notes": "Smart home devices. Seattle HQ \u2014 strong local opportunity."
+  },
+  {
+    "name": "Ecobee",
+    "ats_type": "other",
+    "careers_url": "https://www.ecobee.com/en-us/careers/job-board/",
+    "location": "Remote",
+    "notes": "Smart home / thermostats. Canadian, remote-friendly. Strong product org."
+  },
+  {
+    "name": "Peloton",
+    "ats_type": "greenhouse",
+    "careers_url": "https://boards.greenhouse.io/embed/job_board?for=peloton",
+    "location": "Remote / Hybrid",
+    "notes": "Connected fitness, consumer hardware + software + subscription."
   }
 ]
