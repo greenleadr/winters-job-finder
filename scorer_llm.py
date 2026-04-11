@@ -99,18 +99,29 @@ def _build_prompt(job: dict[str, Any], profile: dict[str, Any]) -> str:
 
 
 def _parse_llm_json(text: str) -> dict[str, Any]:
-    """Parse JSON from Claude's response, handling common formatting issues."""
+    """Parse JSON from Claude's response, handling common formatting issues.
+
+    Uses multiple fallback strategies to extract whatever structured data
+    is available. Returns a partial dict rather than raising — callers can
+    check for empty/missing fields.
+    """
     import re as _re
 
-    text = text.strip()
+    text = (text or "").strip()
+
+    # Empty response — return None so caller can skip
+    if not text:
+        return None  # type: ignore
 
     # Strip markdown code fences (```json ... ``` or ``` ... ```)
     if text.startswith("```"):
-        # Remove opening fence line
         text = _re.sub(r"^```(?:json)?\s*\n?", "", text)
     if text.endswith("```"):
         text = text[:-3]
     text = text.strip()
+
+    if not text:
+        return None  # type: ignore
 
     # Try direct parse first
     try:
@@ -119,9 +130,9 @@ def _parse_llm_json(text: str) -> dict[str, Any]:
         pass
 
     # Extract JSON object from surrounding text
-    # Find the first { and last }
     start = text.find("{")
     end = text.rfind("}")
+    json_str = ""
     if start >= 0 and end > start:
         json_str = text[start:end + 1]
         try:
@@ -131,36 +142,34 @@ def _parse_llm_json(text: str) -> dict[str, Any]:
 
         # Attempt repairs on the extracted JSON
         repaired = json_str
-        # Fix unescaped newlines inside strings
         repaired = _re.sub(r'(?<=": ")(.*?)(?="[,}])', lambda m: m.group(0).replace("\n", "\\n"), repaired, flags=_re.DOTALL)
-        # Fix trailing commas before } or ]
         repaired = _re.sub(r",\s*([}\]])", r"\1", repaired)
-        # Fix single quotes used instead of double quotes
-        # (only outside of already-double-quoted strings)
         try:
             return json.loads(repaired)
         except json.JSONDecodeError:
             pass
 
-        # Last resort: try to extract key fields with regex
-        try:
-            score_m = _re.search(r'"llm_score"\s*:\s*(\d+)', json_str)
-            rec_m = _re.search(r'"recommendation"\s*:\s*"(Apply|Maybe|Skip)"', json_str)
-            if score_m and rec_m:
-                return {
-                    "llm_score": int(score_m.group(1)),
-                    "recommendation": rec_m.group(1),
-                    "strengths": _extract_list(json_str, "strengths"),
-                    "concerns": _extract_list(json_str, "concerns"),
-                    "salary_range": _extract_field(json_str, "salary_range"),
-                    "team_size": _extract_field(json_str, "team_size"),
-                    "reports_to": _extract_field(json_str, "reports_to"),
-                    "role_type": _extract_field(json_str, "role_type"),
-                }
-        except Exception:
-            pass
+    # Last resort: regex-extract whatever fields we can find from the text
+    # (works even if the text has no {} at all — just raw "key": "value" pairs)
+    search_text = json_str if json_str else text
+    score_m = _re.search(r'"?llm_score"?\s*:\s*(\d+)', search_text)
+    rec_m = _re.search(r'"?recommendation"?\s*:\s*"?(Apply|Maybe|Skip)"?', search_text, _re.I)
 
-    raise json.JSONDecodeError(f"Could not parse LLM response", text, 0)
+    if score_m or rec_m:
+        return {
+            "llm_score": int(score_m.group(1)) if score_m else 5,
+            "recommendation": rec_m.group(1).title() if rec_m else "Maybe",
+            "strengths": _extract_list(search_text, "strengths"),
+            "concerns": _extract_list(search_text, "concerns"),
+            "salary_range": _extract_field(search_text, "salary_range"),
+            "team_size": _extract_field(search_text, "team_size"),
+            "reports_to": _extract_field(search_text, "reports_to"),
+            "role_type": _extract_field(search_text, "role_type"),
+            "parse_note": "partial (regex fallback)",
+        }
+
+    # Truly unparseable — return None instead of raising
+    return None  # type: ignore
 
 
 def _extract_list(text: str, key: str) -> list[str]:
@@ -209,7 +218,13 @@ def _call_claude(prompt: str, api_key: str, retries: int = 2) -> dict[str, Any] 
                 if block.get("type") == "text":
                     text += block.get("text", "")
             # Parse the JSON from Claude's response
-            return _parse_llm_json(text)
+            parsed = _parse_llm_json(text)
+            if parsed is None:
+                # Empty or unparseable response — log first 100 chars for debugging
+                stop_reason = data.get("stop_reason", "?")
+                print(f"    Empty/unparseable response (stop={stop_reason}): {repr(text[:100])}", file=sys.stderr)
+                return None
+            return parsed
         except HTTPError as exc:
             if exc.code == 429:
                 wait = 2 ** (attempt + 1)
