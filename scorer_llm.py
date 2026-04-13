@@ -25,6 +25,7 @@ from urllib.request import Request, urlopen
 MODEL = "claude-haiku-4-5-20251001"
 API_URL = "https://api.anthropic.com/v1/messages"
 MAX_DESC_CHARS = 3000  # truncate long descriptions to manage token cost
+MAX_TOKENS = 500       # response token limit (expanded for metadata fields)
 REQUEST_DELAY = 1.0    # seconds between API calls
 
 
@@ -74,26 +75,128 @@ def _build_prompt(job: dict[str, Any], profile: dict[str, Any]) -> str:
         f"recommendation: Apply/Maybe/Skip. Be specific and reference actual "
         f"skills and experience.\n\n"
         f"--- CANDIDATE PROFILE ---\n{profile_summary}\n\n"
+        f"Companies where the candidate has personal referrals "
+        f"(strong network advantage — bias toward Apply if other factors align): "
+        f"{', '.join(profile.get('referrals', []))}\n\n"
         f"--- JOB POSTING ---\n"
         f"Title: {job.get('title', '')}\n"
         f"Company: {job.get('company', '')}\n"
         f"Location: {job.get('location', '')}\n"
         f"Source: {job.get('source', '')}\n"
         f"Tier 1 score: {tier1.get('score', 'N/A')}\n"
+        f"Has referral at this company: {tier1.get('has_referral', False)}\n"
         f"Tier 1 matched skills: {', '.join(tier1.get('matched_skills', []))}\n"
         f"Description:\n{desc}\n\n"
         f"--- INSTRUCTIONS ---\n"
         f"Respond in this exact JSON format (no markdown, no code fences):\n"
         f'{{"llm_score": <1-10>, "strengths": ["...", "...", "..."], '
-        f'"concerns": ["...", "...", "..."], "recommendation": "Apply|Maybe|Skip"}}'
+        f'"concerns": ["...", "...", "..."], "recommendation": "Apply|Maybe|Skip", '
+        f'"salary_range": "$150K-$200K or null if not mentioned", '
+        f'"team_size": "10-15 or null if not mentioned", '
+        f'"reports_to": "VP Engineering or null if not mentioned", '
+        f'"role_type": "manager|executive|IC"}}'
     )
+
+
+def _parse_llm_json(text: str) -> dict[str, Any]:
+    """Parse JSON from Claude's response, handling common formatting issues.
+
+    Uses multiple fallback strategies to extract whatever structured data
+    is available. Returns a partial dict rather than raising — callers can
+    check for empty/missing fields.
+    """
+    import re as _re
+
+    text = (text or "").strip()
+
+    # Empty response — return None so caller can skip
+    if not text:
+        return None  # type: ignore
+
+    # Strip markdown code fences (```json ... ``` or ``` ... ```)
+    if text.startswith("```"):
+        text = _re.sub(r"^```(?:json)?\s*\n?", "", text)
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+
+    if not text:
+        return None  # type: ignore
+
+    # Try direct parse first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Extract JSON object from surrounding text
+    start = text.find("{")
+    end = text.rfind("}")
+    json_str = ""
+    if start >= 0 and end > start:
+        json_str = text[start:end + 1]
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError:
+            pass
+
+        # Attempt repairs on the extracted JSON
+        repaired = json_str
+        repaired = _re.sub(r'(?<=": ")(.*?)(?="[,}])', lambda m: m.group(0).replace("\n", "\\n"), repaired, flags=_re.DOTALL)
+        repaired = _re.sub(r",\s*([}\]])", r"\1", repaired)
+        try:
+            return json.loads(repaired)
+        except json.JSONDecodeError:
+            pass
+
+    # Last resort: regex-extract whatever fields we can find from the text
+    # (works even if the text has no {} at all — just raw "key": "value" pairs)
+    search_text = json_str if json_str else text
+    score_m = _re.search(r'"?llm_score"?\s*:\s*(\d+)', search_text)
+    rec_m = _re.search(r'"?recommendation"?\s*:\s*"?(Apply|Maybe|Skip)"?', search_text, _re.I)
+
+    if score_m or rec_m:
+        return {
+            "llm_score": int(score_m.group(1)) if score_m else 5,
+            "recommendation": rec_m.group(1).title() if rec_m else "Maybe",
+            "strengths": _extract_list(search_text, "strengths"),
+            "concerns": _extract_list(search_text, "concerns"),
+            "salary_range": _extract_field(search_text, "salary_range"),
+            "team_size": _extract_field(search_text, "team_size"),
+            "reports_to": _extract_field(search_text, "reports_to"),
+            "role_type": _extract_field(search_text, "role_type"),
+            "parse_note": "partial (regex fallback)",
+        }
+
+    # Truly unparseable — return None instead of raising
+    return None  # type: ignore
+
+
+def _extract_list(text: str, key: str) -> list[str]:
+    """Extract a JSON array field by regex from malformed JSON."""
+    import re as _re
+    m = _re.search(rf'"{key}"\s*:\s*\[(.*?)\]', text, _re.DOTALL)
+    if m:
+        items = _re.findall(r'"([^"]*)"', m.group(1))
+        return items[:3]
+    return []
+
+
+def _extract_field(text: str, key: str) -> str | None:
+    """Extract a single JSON string field by regex."""
+    import re as _re
+    m = _re.search(rf'"{key}"\s*:\s*"([^"]*)"', text)
+    if m:
+        val = m.group(1)
+        return val if val.lower() != "null" else None
+    return None
 
 
 def _call_claude(prompt: str, api_key: str, retries: int = 2) -> dict[str, Any] | None:
     """Call the Claude API and parse the JSON response."""
     body = json.dumps({
         "model": MODEL,
-        "max_tokens": 400,
+        "max_tokens": MAX_TOKENS,
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
 
@@ -115,14 +218,13 @@ def _call_claude(prompt: str, api_key: str, retries: int = 2) -> dict[str, Any] 
                 if block.get("type") == "text":
                     text += block.get("text", "")
             # Parse the JSON from Claude's response
-            # Strip any markdown fences if present
-            text = text.strip()
-            if text.startswith("```"):
-                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-                if text.endswith("```"):
-                    text = text[:-3]
-                text = text.strip()
-            return json.loads(text)
+            parsed = _parse_llm_json(text)
+            if parsed is None:
+                # Empty or unparseable response — log first 100 chars for debugging
+                stop_reason = data.get("stop_reason", "?")
+                print(f"    Empty/unparseable response (stop={stop_reason}): {repr(text[:100])}", file=sys.stderr)
+                return None
+            return parsed
         except HTTPError as exc:
             if exc.code == 429:
                 wait = 2 ** (attempt + 1)
@@ -151,24 +253,46 @@ def score_job_llm(
     job: dict[str, Any],
     profile: dict[str, Any],
     api_key: str | None = None,
+    db_conn: Any = None,
 ) -> dict[str, Any] | None:
-    """Score a single job with Claude. Returns the LLM result dict or None."""
+    """Score a single job with Claude. Returns the LLM result dict or None.
+
+    If *db_conn* is provided, checks the LLM cache first and skips the
+    API call if a cached response exists.
+    """
     if api_key is None:
         api_key = _get_api_key()
 
+    # Check cache
+    if db_conn is not None:
+        from db import job_id as make_jid, get_llm_cache, set_llm_cache
+        jid = make_jid(
+            job.get("title", ""), job.get("company", ""), job.get("url", "")
+        )
+        cached = get_llm_cache(db_conn, jid)
+        if cached:
+            return cached
+
     prompt = _build_prompt(job, profile)
-    return _call_claude(prompt, api_key)
+    result = _call_claude(prompt, api_key)
+
+    # Store in cache
+    if result and db_conn is not None:
+        set_llm_cache(db_conn, jid, result)
+
+    return result
 
 
 def score_jobs_llm(
     jobs: list[dict[str, Any]],
     profile: dict[str, Any],
     threshold: int = 50,
+    db_conn: Any = None,
 ) -> list[dict[str, Any]]:
     """LLM-score jobs above *threshold* and merge results into _score.
 
     Jobs below threshold are returned unchanged. Jobs that fail the API
-    call are also returned unchanged.
+    call are also returned unchanged. Cached responses are reused.
     """
     api_key = _get_api_key()
 
@@ -178,21 +302,33 @@ def score_jobs_llm(
         file=sys.stderr,
     )
 
+    cached_count = 0
     for i, job in enumerate(eligible):
         title = job.get("title", "?")
         company = job.get("company", "?")
         print(f"  [{i+1}/{len(eligible)}] {title} @ {company} …", file=sys.stderr, end=" ")
 
-        result = score_job_llm(job, profile, api_key)
+        result = score_job_llm(job, profile, api_key, db_conn=db_conn)
         if result:
             job.setdefault("_score", {})["llm"] = result
             rec = result.get("recommendation", "?")
             llm_score = result.get("llm_score", "?")
+            # Check if it came from cache (no delay needed)
+            from db import job_id as make_jid, get_llm_cache
+            if db_conn and get_llm_cache(db_conn, make_jid(
+                job.get("title", ""), job.get("company", ""), job.get("url", "")
+            )):
+                cached_count += 1
+                print(f"score={llm_score}, rec={rec} (cached)", file=sys.stderr)
+                continue
             print(f"score={llm_score}, rec={rec}", file=sys.stderr)
         else:
             print("failed", file=sys.stderr)
 
         time.sleep(REQUEST_DELAY)
+
+    if cached_count:
+        print(f"  {cached_count} results from cache (saved API calls)", file=sys.stderr)
 
     # Re-sort: boost jobs with Apply recommendation
     def _sort_key(j: dict[str, Any]) -> tuple[int, int]:

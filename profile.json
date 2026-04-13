@@ -504,6 +504,12 @@
     "uar_applications_managed": 56
   },
   "resume_context": "Michael Adam Winters is a Senior Technical Product Leader with 15+ years at Amazon (6 years across 4 roles), Apple (1.5 years + 3 years retail), Google (2 years), and Chewy (2.5 years). Non-traditional background (Music Business degree from Full Sail University) — rose through Apple Retail to Google to Amazon to Chewy through demonstrated impact, not pedigree. Executive Board Member at EarthCorps (non-profit, 2022-2025). Currently runs Winters Product Group providing fractional product leadership and built VetReady, an AI-powered health platform (React/Supabase/Stripe/Vercel/Claude API). At Chewy (Associate Director of Technical Product), he built the first automated compliance analytics platform, led PCI DSS 4.0 readiness across 3 entities (50% audit cycle reduction), operationalized CCPA/DSAR at enterprise scale (2-3K requests bi-weekly, 4-day completion vs 45-day SLA), deployed BigID data classification across 29+ data sources, managed 56-application User Access Review via SailPoint, directed 'Chewy Heartbeat' analytics dashboard for executive visibility, designed AI/LLM enablement for 20+ product teams, and managed 13 global reports (mentored 20% to promotion, turned around 30% underperformers). At Amazon, he led a 21-person CV/ML team deploying defect detection across 300+ fulfillment centers (11% defect reduction), re-architected the largest operational metrics platform (30K daily users, 97% page load improvement from 3 min to 5 sec), built custom dashboard generators eliminating 3,000 hrs/week overhead across 300 sites, drove $32M cost avoidance, managed 3 managers + 30 ICs (4 promotions), and created Project Kariba — a zero-to-one upstream fulfillment model that avoided $293M in supply chain costs over 3 years. Also launched 7 3PL solutions ($50M+ NPV) and led a 5-day pandemic-response tooling turnaround. At Apple, he designed day-one Apple Watch 1.0 support capability in 3 months (96% CSAT) and deployed video/chatbot tools across 5 global centers for 2,000+ agents. At Google, he managed the Walmart partnership ($10M+/month revenue, 10K+ daily product listing ads) and led a complete operational overhaul. Core strengths: transforming orgs from reactive to data-driven, building platforms at scale, compliance/GRC (PCI DSS, CCPA, BigID, SailPoint), AI/ML integration, supply chain optimization, cross-functional leadership, and delivering measurable business impact ($325M+ career total).",
+  "referrals": [
+    "Amazon",
+    "Apple",
+    "Google",
+    "Axon"
+  ],
   "preferences": {
     "work_arrangement": [
       "remote",
@@ -515,7 +521,12 @@
       "Redmond, WA",
       "Whidbey Island, WA",
       "Oak Harbor, WA",
-      "Everett, WA"
+      "Everett, WA",
+      "Island County, WA",
+      "Skagit County, WA",
+      "Snohomish County, WA",
+      "Pittsburgh, PA",
+      "Victoria, BC"
     ],
     "company_size": [
       "mid-size",

@@ -49,17 +49,76 @@ _COLLECTORS: list[tuple[str, str]] = [
     ("career_pages", "collectors.career_pages"),
     ("remotive", "collectors.remotive"),
     ("hn_hiring", "collectors.hn_hiring"),
+    ("gov_jobs", "collectors.gov_jobs"),
 ]
 
-# Seattle metro area patterns for location filtering
-_SEATTLE_METRO_RE = re.compile(
+# Target location allowlist — specific cities/regions we want
+_LOCATION_RE = re.compile(
     r"\b(seattle|bellevue|redmond|kirkland|tacoma|renton|kent|bothell"
     r"|woodinville|issaquah|sammamish|mercer\s+island"
-    r"|whidbey|oak\s+harbor|everett)\b",
+    r"|whidbey|oak\s+harbor|everett"
+    r"|pittsburgh"
+    r"|victoria\s*,?\s*(?:b\.?c\.?|british\s+columbia)"
+    r"|british\s+columbia"
+    r"|island\s+county|skagit\s+county|snohomish\s+county"
+    r"|oak\s+harbor|anacortes|coupeville|langley|freeland"
+    r"|mount\s+vernon|burlington|sedro[- ]woolley|la\s+conner"
+    r"|marysville|lake\s+stevens|snohomish|stanwood|arlington"
+    r"|lynnwood|edmonds|mukilteo|mountlake\s+terrace"
+    r")\b",
     re.I,
 )
-_REMOTE_RE = re.compile(
-    r"\b(remote|work\s+from\s+home|distributed|anywhere)\b", re.I,
+
+# US-qualified remote — "remote" alone is NOT enough (could be remote in Europe)
+_REMOTE_US_RE = re.compile(
+    r"(?:remote|work\s+from\s+home|distributed)"
+    r"[^.]{0,40}"
+    r"(?:u\.?s\.?a?\.?|united\s+states|america)",
+    re.I,
+)
+_REMOTE_US_RE2 = re.compile(
+    r"(?:u\.?s\.?a?\.?|united\s+states)"
+    r"[^.]{0,40}"
+    r"(?:remote|work\s+from\s+home)",
+    re.I,
+)
+
+# Hard blocklist — reject jobs in these countries/cities even if they mention "Remote"
+_BLOCKED_LOCATIONS_RE = re.compile(
+    r"\b("
+    # Countries
+    r"india|ireland|germany|united\s+kingdom|france|spain|"
+    r"netherlands|australia|singapore|japan|china|brazil|mexico|israel|"
+    r"poland|czech|romania|bulgaria|ukraine|turkey|philippines|"
+    r"argentina|chile|colombia|nigeria|kenya|south\s+africa|"
+    r"new\s+zealand|sweden|norway|denmark|finland|belgium|austria|"
+    r"switzerland|portugal|italy|greece|hungary|croatia|"
+    r"canada(?!\s*,?\s*(?:bc|b\.c\.|british\s+columbia|victoria))"
+    r"|"
+    # Non-target cities
+    r"london|dublin|berlin|munich|amsterdam|paris|barcelona|madrid|"
+    r"bangalore|bengaluru|hyderabad|pune|mumbai|chennai|delhi|noida|"
+    r"gurgaon|gurugram|kolkata|"
+    r"sydney|melbourne|brisbane|"
+    r"tokyo|osaka|shanghai|beijing|shenzhen|"
+    r"hong\s+kong|taipei|seoul|"
+    r"tel\s+aviv|haifa|"
+    r"prague|warsaw|bucharest|sofia|krakow|wroclaw|"
+    r"stockholm|oslo|copenhagen|helsinki|"
+    r"toronto|montreal|vancouver(?!\s*island)"
+    r")\b",
+    re.I,
+)
+
+# Negative keywords — skip jobs containing these terms in title or description
+_NEGATIVE_RE = re.compile(
+    r"\b("
+    r"intern\b|internship|part[- ]time|clearance\s+required|"
+    r"security\s+clearance|ts/sci|polygraph|"
+    r"on[- ]site\s+only|no\s+remote|"
+    r"unpaid|volunteer|equity[- ]only"
+    r")\b",
+    re.I,
 )
 
 
@@ -116,6 +175,22 @@ def _deduplicate(
     return new
 
 
+def _dedupe_by_title_company(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collapse jobs with the same title+company (different URL variants).
+
+    Greenhouse often posts one role with multiple location-specific URLs.
+    Keep the first occurrence and drop the rest.
+    """
+    seen: set[str] = set()
+    unique: list[dict[str, Any]] = []
+    for job in jobs:
+        key = f"{job.get('title', '').lower().strip()}|{job.get('company', '').lower().strip()}"
+        if key not in seen:
+            seen.add(key)
+            unique.append(job)
+    return unique
+
+
 # ---------------------------------------------------------------------------
 # 4. Location filter
 # ---------------------------------------------------------------------------
@@ -138,24 +213,49 @@ def _is_recent(job: dict[str, Any]) -> bool:
         return True  # unparseable date = keep it
 
 
+def _passes_negative_filter(job: dict[str, Any]) -> bool:
+    """Return False if the job contains negative keywords (intern, part-time, etc.)."""
+    text = f"{job.get('title', '')} {(job.get('description', '') or '')[:500]}"
+    return not _NEGATIVE_RE.search(text)
+
+
 def _matches_location(job: dict[str, Any]) -> bool:
+    location = job.get("location", "")
     text = " ".join([
-        job.get("location", ""),
+        location,
         job.get("title", ""),
         (job.get("description", "") or "")[:500],
     ])
-    return bool(_SEATTLE_METRO_RE.search(text) or _REMOTE_RE.search(text))
+
+    # 1. Check allowlist FIRST — if a target city is in the location, accept
+    if _LOCATION_RE.search(location):
+        return True
+
+    # 2. HARD BLOCK: reject if location field contains non-target country/city
+    if location and _BLOCKED_LOCATIONS_RE.search(location):
+        return False
+
+    # 3. Check allowlist on full text (title + description)
+    if _LOCATION_RE.search(text):
+        return True
+
+    # 4. US-qualified remote (must mention US/USA/United States near "remote")
+    if _REMOTE_US_RE.search(text) or _REMOTE_US_RE2.search(text):
+        return True
+
+    return False
 
 
 # ---------------------------------------------------------------------------
 # 6. LLM scoring stub
 # ---------------------------------------------------------------------------
 
-def _llm_rescore(jobs: list[dict[str, Any]], profile: dict[str, Any]) -> list[dict[str, Any]]:
-    """Run LLM re-scoring on jobs with Tier 1 score >= 50."""
+def _llm_rescore(jobs: list[dict[str, Any]], profile: dict[str, Any],
+                  conn: Any = None) -> list[dict[str, Any]]:
+    """Run LLM re-scoring on jobs with Tier 1 score >= 60."""
     try:
         from scorer_llm import score_jobs_llm
-        return score_jobs_llm(jobs, profile, threshold=60)
+        return score_jobs_llm(jobs, profile, threshold=60, db_conn=conn)
     except Exception as exc:
         print(f"LLM re-scoring failed: {exc}", file=sys.stderr)
         return jobs
@@ -183,7 +283,16 @@ def run() -> None:
     raw_jobs = [j for j in raw_jobs if _is_recent(j)]
     print(f"After age filter (≤{MAX_JOB_AGE_DAYS}d): {len(raw_jobs)}", file=sys.stderr)
 
-    # 3. Deduplicate
+    # 2c. Normalize titles (Sr. PM → Senior Product Manager, etc.)
+    from db import _normalize_title
+    for j in raw_jobs:
+        j["title"] = _normalize_title(j.get("title", ""))
+
+    # 2d. Collapse same title+company (Greenhouse multi-location dupes)
+    raw_jobs = _dedupe_by_title_company(raw_jobs)
+    print(f"After title+company dedup: {len(raw_jobs)}", file=sys.stderr)
+
+    # 3. Deduplicate against DB
     conn = db.init_db()
     new_jobs = _deduplicate(raw_jobs, conn)
     print(f"New (unseen) jobs: {len(new_jobs)}", file=sys.stderr)
@@ -191,6 +300,10 @@ def run() -> None:
     # 4. Location filter
     filtered = [j for j in new_jobs if _matches_location(j)]
     print(f"After location filter: {len(filtered)}", file=sys.stderr)
+
+    # 4b. Negative keyword filter
+    filtered = [j for j in filtered if _passes_negative_filter(j)]
+    print(f"After negative keyword filter: {len(filtered)}", file=sys.stderr)
 
     if not filtered:
         print("No new jobs after filtering — saving raw and exiting.", file=sys.stderr)
@@ -202,20 +315,41 @@ def run() -> None:
     scored = score_jobs(filtered, profile)
     print(f"Scored {len(scored)} jobs", file=sys.stderr)
 
+    # 5b. Backfill: re-score any DB jobs that have NULL/0 scores
+    unscored = db.get_unscored_jobs(conn)
+    if unscored:
+        print(f"Backfill scoring {len(unscored)} unscored DB jobs …", file=sys.stderr)
+        from scorer import score_job, _load_target_companies
+        profile_with_boost = {**profile, "_target_companies": _load_target_companies()}
+        backfilled = 0
+        for uj in unscored:
+            if not uj.get("description"):
+                continue
+            result = score_job(uj, profile_with_boost)
+            jid = db.job_id(uj.get("title", ""), uj.get("company", ""), uj.get("url", ""))
+            db.update_score(
+                conn, jid, result["score"],
+                result["matched_skills"], result["flags"],
+            )
+            backfilled += 1
+        print(f"  Backfilled {backfilled} jobs", file=sys.stderr)
+
     # 6. Optional LLM re-scoring
     if os.environ.get("USE_LLM_SCORING", "").lower() == "true":
-        scored = _llm_rescore(scored, profile)
+        scored = _llm_rescore(scored, profile, conn=conn)
 
-    # 7. Build digest (with still-open and recently-closed sections)
+    # 7. Build digest (with still-open, long-open, and recently-closed sections)
     today = date.today()
     still_open = db.get_open_jobs(conn, days=7)
     recently_closed = db.get_closed_jobs(conn, days=3)
+    long_open = db.get_long_open_jobs(conn, min_days=7, max_days=30)
     # Exclude today's new jobs from still-open (they're in the main section)
     new_urls = {j.get("url") for j in scored}
     still_open = [j for j in still_open if j.get("url") not in new_urls]
     html_body = generate_digest(
         scored, run_date=today,
         still_open=still_open, recently_closed=recently_closed,
+        long_open=long_open,
     )
 
     # 8. Send email
@@ -235,9 +369,34 @@ def run() -> None:
     # Update scores for the filtered/scored subset
     db.save_jobs(conn, scored)
 
+    # 9a2. Save company intel from career pages
+    try:
+        from collectors.career_pages import get_company_intel
+        for co_name, intel in get_company_intel().items():
+            db.save_company_intel(conn, co_name, intel["total_roles"], intel["product_roles"])
+    except Exception:
+        pass
+
+    # 9a3. Log companies from Adzuna not in our target list (for future expansion)
+    try:
+        from scorer import _load_target_companies
+        known = _load_target_companies()
+        new_companies = set()
+        for j in raw_jobs:
+            co = j.get("company", "").strip()
+            if co and co.lower() not in known and j.get("source") == "adzuna":
+                new_companies.add(co)
+        if new_companies:
+            print(f"  Discovered {len(new_companies)} new companies from Adzuna (not in target list)", file=sys.stderr)
+    except Exception:
+        pass
+
     # 9b. Detect closed jobs (no longer in current collection)
-    current_urls = {j.get("url", "") for j in raw_jobs if j.get("url")}
-    closed_count = db.mark_closed(conn, current_urls)
+    current_keys = {
+        f"{j.get('title', '').lower().strip()}|{j.get('company', '').lower().strip()}"
+        for j in raw_jobs
+    }
+    closed_count = db.mark_closed(conn, current_keys)
     if closed_count:
         print(f"Marked {closed_count} jobs as closed", file=sys.stderr)
 

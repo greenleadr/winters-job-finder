@@ -16,9 +16,20 @@ from typing import Any
 
 TOP_N = 10
 
+from scorer import TAG_COLORS
+
 
 def _esc(text: str) -> str:
     return html.escape(text, quote=True)
+
+
+def _tag_pill(tag: str) -> str:
+    bg = TAG_COLORS.get(tag, "#64748b")
+    return (
+        f'<span style="display:inline-block;background:{bg};color:#fff;'
+        f'font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;'
+        f'margin:0 4px 4px 0;">{_esc(tag)}</span>'
+    )
 
 
 def _score_color(score: int) -> tuple[str, str]:
@@ -71,12 +82,33 @@ def _render_job_row(job: dict[str, Any], rank: int) -> str:
     url = _esc(job.get("url", "#"))
     source = _esc(job.get("source", ""))
     date_posted = _esc(job.get("date_posted", ""))
+    salary_min = s.get("salary_min")
+    salary_max = s.get("salary_max")
 
     skills_html = " ".join(_skill_pill(sk) for sk in matched[:8])
     if len(matched) > 8:
         skills_html += f' <span style="color:#64748b;font-size:12px;">+{len(matched) - 8} more</span>'
 
     flags_html = " ".join(_flag_pill(f) for f in flags) if flags else ""
+
+    # Salary badge
+    salary_html = ""
+    if salary_min and salary_max:
+        salary_html = (
+            f'<span style="display:inline-block;background:#059669;color:#fff;'
+            f'font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;'
+            f'margin-right:6px;">${salary_min // 1000}K–${salary_max // 1000}K</span>'
+        )
+    elif salary_min:
+        salary_html = (
+            f'<span style="display:inline-block;background:#059669;color:#fff;'
+            f'font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;'
+            f'margin-right:6px;">${salary_min // 1000}K+</span>'
+        )
+
+    # Tags
+    tags = s.get("tags", [])
+    tags_html = " ".join(_tag_pill(t) for t in tags) if tags else ""
 
     meta_parts = [location]
     if source:
@@ -135,7 +167,8 @@ def _render_job_row(job: dict[str, Any], rank: int) -> str:
                                   text-decoration:none;">{title}</a>
           <span style="color:#475569;font-size:14px;margin-left:8px;">{company}</span>
         </div>
-        <div style="margin-bottom:6px;">{_score_bar(score)}</div>
+        <div style="margin-bottom:6px;">{_score_bar(score)} {salary_html}</div>
+        {f'<div style="margin-bottom:6px;">{tags_html}</div>' if tags_html else ''}
         <div style="color:#64748b;font-size:13px;margin-bottom:6px;">{meta}</div>
         <div style="margin-bottom:4px;">{skills_html}</div>
         {f'<div style="margin-top:6px;">{flags_html}</div>' if flags_html else ''}
@@ -193,6 +226,7 @@ def generate_digest(
     run_date: date | None = None,
     still_open: list[dict[str, Any]] | None = None,
     recently_closed: list[dict[str, Any]] | None = None,
+    long_open: list[dict[str, Any]] | None = None,
 ) -> str:
     """Return an HTML email body for the given scored job list.
 
@@ -212,17 +246,40 @@ def generate_digest(
         key=lambda j: j.get("_score", {}).get("score", 0),
         reverse=True,
     )
-    top = jobs[:TOP_N]
+
+    # Separate Amazon jobs from the main list
+    amazon_jobs = [j for j in jobs if "amazon" in (j.get("company") or "").lower()]
+    non_amazon_jobs = [j for j in jobs if "amazon" not in (j.get("company") or "").lower()]
+
+    top = non_amazon_jobs[:TOP_N]
 
     strong = sum(1 for j in jobs if j.get("_score", {}).get("score", 0) >= 70)
     moderate = sum(1 for j in jobs if 50 <= j.get("_score", {}).get("score", 0) < 70)
 
-    # Build job rows
+    # Build job rows (non-Amazon only)
     rows_html = "\n".join(_render_job_row(j, i + 1) for i, j in enumerate(top))
+
+    # Build Amazon section as compact rows
+    amazon_compact = []
+    for j in amazon_jobs[:15]:
+        s = j.get("_score", {})
+        amazon_compact.append({
+            "title": j.get("title", ""),
+            "company": j.get("company", ""),
+            "location": j.get("location", ""),
+            "url": j.get("url", "#"),
+            "score": s.get("score", 0),
+        })
+    amazon_html = _render_section(
+        f"Amazon Jobs ({len(amazon_jobs)})", amazon_compact, icon="&#128230;"
+    ) if amazon_jobs else ""
 
     # Build extra sections
     still_open_html = _render_section(
         "Still Open", still_open or [], icon="&#128994;"
+    )
+    long_open_html = _render_section(
+        "Still Open 7+ Days — Apply Soon", long_open or [], icon="&#11088;"
     )
     closed_html = _render_section(
         "Recently Closed", recently_closed or [], icon="&#128308;"
@@ -279,7 +336,9 @@ def generate_digest(
       </table>
     </div>
 
+    {amazon_html}
     {still_open_html}
+    {long_open_html}
     {closed_html}
 
     <!-- Footer -->

@@ -1,0 +1,34 @@
+name: Weekly Job Summary
+
+on:
+  schedule:
+    # Friday at 5 PM Pacific = Saturday 0:00 UTC
+    - cron: "0 0 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  weekly-summary:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Send weekly summary
+        env:
+          BREVO_SMTP_LOGIN: ${{ secrets.BREVO_SMTP_LOGIN }}
+          BREVO_SMTP_KEY: ${{ secrets.BREVO_SMTP_KEY }}
+          BREVO_SENDER: ${{ secrets.BREVO_SENDER }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python weekly_summary.py

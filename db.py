@@ -15,6 +15,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 _DB_DIR = Path(__file__).resolve().parent / "data"
 _DB_PATH = _DB_DIR / "jobs.db"
@@ -28,9 +29,31 @@ def _connect(db_path: str | Path | None = None) -> sqlite3.Connection:
     return conn
 
 
+# Tracking query params to strip before dedup hashing
+_TRACKING_PARAMS = {
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "fbclid", "gclid", "gbraid", "wbraid", "msclkid",
+    "trk", "ref", "referer", "source", "si", "mc_cid", "mc_eid",
+    "gh_jid", "gh_src", "lever-via", "lever-source", "lever-origin",
+}
+
+
+def _normalize_url(url: str) -> str:
+    """Strip tracking/referral query params from a URL for consistent dedup."""
+    try:
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query, keep_blank_values=False)
+        cleaned = {k: v for k, v in params.items() if k.lower() not in _TRACKING_PARAMS}
+        new_query = urlencode(cleaned, doseq=True) if cleaned else ""
+        return urlunparse(parsed._replace(query=new_query, fragment=""))
+    except Exception:
+        return url
+
+
 def job_id(title: str, company: str, url: str) -> str:
-    """Deterministic ID: SHA-256 of title|company|url (lowercased)."""
-    raw = f"{title.lower().strip()}|{company.lower().strip()}|{url.lower().strip()}"
+    """Deterministic ID: SHA-256 of title|company|normalized_url (lowercased)."""
+    clean_url = _normalize_url(url).lower().strip()
+    raw = f"{title.lower().strip()}|{company.lower().strip()}|{clean_url}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
@@ -53,7 +76,22 @@ CREATE TABLE IF NOT EXISTS jobs (
     flags       TEXT,
     first_seen  TEXT NOT NULL,
     last_seen   TEXT NOT NULL,
-    status      TEXT NOT NULL DEFAULT 'open'
+    status      TEXT NOT NULL DEFAULT 'open',
+    salary_min  INTEGER,
+    salary_max  INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS company_intel (
+    company     TEXT PRIMARY KEY,
+    total_roles INTEGER DEFAULT 0,
+    product_roles INTEGER DEFAULT 0,
+    last_updated TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS llm_cache (
+    job_id   TEXT PRIMARY KEY,
+    response TEXT NOT NULL,
+    created  TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_jobs_first_seen ON jobs(first_seen);
@@ -62,6 +100,9 @@ CREATE INDEX IF NOT EXISTS idx_jobs_score      ON jobs(score);
 
 _MIGRATIONS = [
     "ALTER TABLE jobs ADD COLUMN status TEXT NOT NULL DEFAULT 'open'",
+    "ALTER TABLE jobs ADD COLUMN salary_min INTEGER",
+    "ALTER TABLE jobs ADD COLUMN salary_max INTEGER",
+    "ALTER TABLE jobs ADD COLUMN tags TEXT DEFAULT '[]'",
 ]
 
 
@@ -76,7 +117,33 @@ def init_db(db_path: str | Path | None = None) -> sqlite3.Connection:
         except sqlite3.OperationalError:
             pass  # column already exists
     conn.commit()
+    # One-time migration: re-key jobs with normalized URLs
+    _migrate_normalize_ids(conn)
     return conn
+
+
+def _migrate_normalize_ids(conn: sqlite3.Connection) -> None:
+    """Re-key jobs whose stored ID doesn't match the current job_id() hash.
+
+    This handles the transition from pre-URL-normalization IDs to
+    post-normalization IDs. Runs once — after all IDs match, it's a no-op.
+    """
+    rows = conn.execute("SELECT id, title, company, url FROM jobs").fetchall()
+    updated = 0
+    for row in rows:
+        new_id = job_id(row["title"], row["company"], row["url"])
+        if new_id != row["id"]:
+            # Check if new_id already exists (avoid duplicate key)
+            existing = conn.execute("SELECT 1 FROM jobs WHERE id = ?", (new_id,)).fetchone()
+            if existing:
+                # New ID already exists — just delete the old row
+                conn.execute("DELETE FROM jobs WHERE id = ?", (row["id"],))
+            else:
+                conn.execute("UPDATE jobs SET id = ? WHERE id = ?", (new_id, row["id"]))
+            updated += 1
+    if updated:
+        conn.commit()
+        print(f"  Migrated {updated} job IDs to normalized URLs", file=sys.stderr)
 
 
 # ---------------------------------------------------------------------------
@@ -107,20 +174,33 @@ def save_jobs(
         matched_json = json.dumps(score_data.get("matched_skills", []))
         flags_json = json.dumps(score_data.get("flags", []))
         score_val = score_data.get("score")
+        salary_min = score_data.get("salary_min")
+        salary_max = score_data.get("salary_max")
+        tags_json = json.dumps(score_data.get("tags", []))
 
         existing = conn.execute("SELECT 1 FROM jobs WHERE id = ?", (jid,)).fetchone()
         if existing:
-            conn.execute(
-                "UPDATE jobs SET last_seen = ?, score = ? WHERE id = ?",
-                (now, score_val, jid),
-            )
+            # Only update score if we have a real one (don't overwrite with None)
+            if score_val is not None:
+                conn.execute(
+                    "UPDATE jobs SET last_seen = ?, score = ?, matched_skills = ?, "
+                    "flags = ?, salary_min = COALESCE(?, salary_min), "
+                    "salary_max = COALESCE(?, salary_max), tags = ? WHERE id = ?",
+                    (now, score_val, matched_json, flags_json,
+                     salary_min, salary_max, tags_json, jid),
+                )
+            else:
+                conn.execute(
+                    "UPDATE jobs SET last_seen = ? WHERE id = ?",
+                    (now, jid),
+                )
         else:
             conn.execute(
                 """INSERT INTO jobs
                    (id, title, company, location, url, description,
                     source, date_posted, score, matched_skills, flags,
-                    first_seen, last_seen)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    first_seen, last_seen, salary_min, salary_max, tags)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     jid,
                     job.get("title", ""),
@@ -135,6 +215,9 @@ def save_jobs(
                     flags_json,
                     now,
                     now,
+                    salary_min,
+                    salary_max,
+                    tags_json,
                 ),
             )
             inserted += 1
@@ -145,24 +228,28 @@ def save_jobs(
 
 def mark_closed(
     conn: sqlite3.Connection,
-    current_urls: set[str],
+    current_titles_companies: set[str],
     max_age_days: int = 7,
 ) -> int:
-    """Mark jobs as 'closed' if they were seen recently but are no longer
-    in the current collection.  Only considers jobs first seen within
-    *max_age_days* to avoid marking ancient jobs.
+    """Mark jobs as 'closed' if their title+company combo is no longer
+    in the current collection.  Uses title+company instead of URL to
+    avoid false positives from Greenhouse multi-location variants.
+
+    *current_titles_companies* should be a set of "title|company" strings
+    (lowercased).
 
     Returns the number of jobs marked closed.
     """
     cutoff = (datetime.now(timezone.utc) - timedelta(days=max_age_days)).isoformat()
     rows = conn.execute(
-        "SELECT id, url FROM jobs WHERE status = 'open' AND first_seen >= ?",
+        "SELECT id, title, company FROM jobs WHERE status = 'open' AND first_seen >= ?",
         (cutoff,),
     ).fetchall()
 
     closed = 0
     for row in rows:
-        if row["url"] and row["url"] not in current_urls:
+        key = f"{(row['title'] or '').lower().strip()}|{(row['company'] or '').lower().strip()}"
+        if key not in current_titles_companies:
             conn.execute(
                 "UPDATE jobs SET status = 'closed' WHERE id = ?", (row["id"],)
             )
@@ -187,6 +274,27 @@ def get_open_jobs(
     return [dict(row) for row in rows]
 
 
+def get_long_open_jobs(
+    conn: sqlite3.Connection,
+    min_days: int = 7,
+    max_days: int = 30,
+) -> list[dict[str, Any]]:
+    """Return jobs that have been open for 7+ days — a positive signal.
+
+    These roles haven't been filled yet, so they may be worth applying to.
+    """
+    now = datetime.now(timezone.utc)
+    recent_cutoff = (now - timedelta(days=min_days)).isoformat()
+    old_cutoff = (now - timedelta(days=max_days)).isoformat()
+    rows = conn.execute(
+        "SELECT * FROM jobs WHERE status = 'open' "
+        "AND first_seen < ? AND first_seen >= ? AND (score IS NOT NULL AND score > 0) "
+        "ORDER BY score DESC",
+        (recent_cutoff, old_cutoff),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def get_closed_jobs(
     conn: sqlite3.Connection,
     days: int = 3,
@@ -199,6 +307,210 @@ def get_closed_jobs(
         (cutoff,),
     ).fetchall()
     return [dict(row) for row in rows]
+
+
+_VALID_STATUSES = {"open", "closed", "applied", "interviewing", "rejected", "offer"}
+
+
+def set_status(
+    conn: sqlite3.Connection,
+    jid: str,
+    status: str,
+) -> bool:
+    """Manually set a job's application status.
+
+    Valid statuses: open, closed, applied, interviewing, rejected, offer.
+    Returns True if the job was found and updated.
+    """
+    if status not in _VALID_STATUSES:
+        raise ValueError(f"Invalid status '{status}'. Must be one of: {_VALID_STATUSES}")
+    result = conn.execute(
+        "UPDATE jobs SET status = ? WHERE id = ?", (status, jid)
+    )
+    conn.commit()
+    return result.rowcount > 0
+
+
+def get_jobs_by_status(
+    conn: sqlite3.Connection,
+    status: str,
+) -> list[dict[str, Any]]:
+    """Return all jobs with the given status, sorted by score descending."""
+    rows = conn.execute(
+        "SELECT * FROM jobs WHERE status = ? ORDER BY score DESC",
+        (status,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_application_funnel(conn: sqlite3.Connection) -> dict[str, int]:
+    """Return counts by status for the application funnel."""
+    rows = conn.execute(
+        "SELECT status, COUNT(*) as cnt FROM jobs GROUP BY status"
+    ).fetchall()
+    return {row["status"]: row["cnt"] for row in rows}
+
+
+# ---------------------------------------------------------------------------
+# LLM Cache
+# ---------------------------------------------------------------------------
+
+def get_llm_cache(conn: sqlite3.Connection, jid: str) -> dict[str, Any] | None:
+    """Return cached LLM response for a job, or None if not cached."""
+    row = conn.execute(
+        "SELECT response FROM llm_cache WHERE job_id = ?", (jid,)
+    ).fetchone()
+    if row:
+        try:
+            return json.loads(row["response"])
+        except (json.JSONDecodeError, TypeError):
+            return None
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Salary Benchmarking
+# ---------------------------------------------------------------------------
+
+def get_salary_benchmarks(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
+    """Aggregate salary data by normalized title.
+
+    Returns {title: {count, avg_min, avg_max, min_min, max_max}}.
+    """
+    rows = conn.execute(
+        "SELECT title, salary_min, salary_max FROM jobs "
+        "WHERE salary_min IS NOT NULL AND salary_max IS NOT NULL "
+        "AND salary_min > 0 AND salary_max > 0"
+    ).fetchall()
+
+    buckets: dict[str, list[tuple[int, int]]] = {}
+    for row in rows:
+        t = _normalize_title(row["title"])
+        buckets.setdefault(t, []).append((row["salary_min"], row["salary_max"]))
+
+    result: dict[str, dict[str, Any]] = {}
+    for title, salaries in sorted(buckets.items(), key=lambda x: -len(x[1])):
+        mins = [s[0] for s in salaries]
+        maxs = [s[1] for s in salaries]
+        result[title] = {
+            "count": len(salaries),
+            "avg_min": sum(mins) // len(mins),
+            "avg_max": sum(maxs) // len(maxs),
+            "min_min": min(mins),
+            "max_max": max(maxs),
+        }
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Title Normalization
+# ---------------------------------------------------------------------------
+
+import re as _re
+
+_TITLE_NORMALIZATIONS = [
+    (_re.compile(r"\bSr\.?\s+", _re.I), "Senior "),
+    (_re.compile(r"\bJr\.?\s+", _re.I), "Junior "),
+    (_re.compile(r"\bMgr\.?\b", _re.I), "Manager"),
+    (_re.compile(r"\bDir\.(?=\s|$)", _re.I), "Director"),
+    (_re.compile(r"\bProd\.(?=\s|$)", _re.I), "Product"),
+    (_re.compile(r"\bMgmt\.(?=\s|$)", _re.I), "Management"),
+    (_re.compile(r"\bEng\.(?=\s|$)", _re.I), "Engineering"),
+    (_re.compile(r"\bPM\b"), "Product Manager"),
+    (_re.compile(r"\bGPM\b"), "Group Product Manager"),
+    (_re.compile(r"\bSPM\b"), "Senior Product Manager"),
+    (_re.compile(r"\s+", _re.I), " "),
+]
+
+
+def _normalize_title(title: str) -> str:
+    """Normalize job title variations to canonical forms."""
+    t = title.strip()
+    for pattern, replacement in _TITLE_NORMALIZATIONS:
+        t = pattern.sub(replacement, t)
+    return t.strip()
+
+
+# ---------------------------------------------------------------------------
+# Company Intelligence
+# ---------------------------------------------------------------------------
+
+def save_company_intel(
+    conn: sqlite3.Connection,
+    company: str,
+    total_roles: int,
+    product_roles: int,
+) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO company_intel (company, total_roles, product_roles, last_updated) "
+        "VALUES (?, ?, ?, ?) ON CONFLICT(company) DO UPDATE SET "
+        "total_roles = ?, product_roles = ?, last_updated = ?",
+        (company, total_roles, product_roles, now, total_roles, product_roles, now),
+    )
+    conn.commit()
+
+
+def get_company_intel(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
+    rows = conn.execute("SELECT * FROM company_intel ORDER BY product_roles DESC").fetchall()
+    return {row["company"]: dict(row) for row in rows}
+
+
+# ---------------------------------------------------------------------------
+# LLM Cache
+# ---------------------------------------------------------------------------
+
+def get_all_llm_cache(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
+    """Return all cached LLM responses as {job_id: response_dict}."""
+    rows = conn.execute("SELECT job_id, response FROM llm_cache").fetchall()
+    result = {}
+    for row in rows:
+        try:
+            result[row["job_id"]] = json.loads(row["response"])
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return result
+
+
+def set_llm_cache(conn: sqlite3.Connection, jid: str, response: dict[str, Any]) -> None:
+    """Cache an LLM response for a job."""
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO llm_cache (job_id, response, created) VALUES (?, ?, ?) "
+        "ON CONFLICT(job_id) DO UPDATE SET response = ?, created = ?",
+        (jid, json.dumps(response), now, json.dumps(response), now),
+    )
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Unscored backfill
+# ---------------------------------------------------------------------------
+
+def get_unscored_jobs(
+    conn: sqlite3.Connection,
+) -> list[dict[str, Any]]:
+    """Return jobs that have no score (NULL or 0), for backfill scoring."""
+    rows = conn.execute(
+        "SELECT * FROM jobs WHERE score IS NULL OR score = 0 "
+        "ORDER BY first_seen DESC",
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def update_score(
+    conn: sqlite3.Connection,
+    jid: str,
+    score: int,
+    matched_skills: list[str],
+    flags: list[str],
+) -> None:
+    """Update score fields for a single job by ID."""
+    conn.execute(
+        "UPDATE jobs SET score = ?, matched_skills = ?, flags = ? WHERE id = ?",
+        (score, json.dumps(matched_skills), json.dumps(flags), jid),
+    )
+    conn.commit()
 
 
 def get_history(

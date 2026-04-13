@@ -46,8 +46,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add --force data/jobs.db
           git add docs/index.html 2>/dev/null || true
-          git diff --cached --quiet && echo "No changes to commit" || \
-            git commit -m "chore: update jobs.db and dashboard [skip ci]" && git push
+          git diff --cached --quiet && echo "No changes to commit" || {
+            git commit -m "chore: update jobs.db and dashboard [skip ci]"
+            git pull --rebase --strategy-option=ours origin main || true
+            git push
+          }
 
       - name: Upload output artifacts
         if: always()
