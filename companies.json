@@ -102,7 +102,7 @@
     "ats_type": "workday",
     "careers_url": "https://careers.chewy.com/us/en/search-results",
     "location": "Bellevue, WA / Remote",
-    "notes": "E-commerce. Former employer \u2014 strong network advantage."
+    "notes": "E-commerce. Former employer — strong network advantage."
   },
   {
     "name": "Outreach",
@@ -1292,7 +1292,7 @@
     "ats_type": "workday",
     "careers_url": "https://thetradedesk.wd5.myworkdayjobs.com/TTDExternalSite",
     "location": "Bellevue, WA",
-    "notes": "Programmatic ad tech leader. Bellevue HQ \u2014 local opportunity. Perfect ad tech alignment."
+    "notes": "Programmatic ad tech leader. Bellevue HQ — local opportunity. Perfect ad tech alignment."
   },
   {
     "name": "Sonos",
@@ -1362,7 +1362,7 @@
     "ats_type": "breezy",
     "careers_url": "https://wyze-labs.breezy.hr/",
     "location": "Seattle, WA",
-    "notes": "Smart home devices. Seattle HQ \u2014 strong local opportunity."
+    "notes": "Smart home devices. Seattle HQ — strong local opportunity."
   },
   {
     "name": "Ecobee",
@@ -1377,5 +1377,260 @@
     "careers_url": "https://boards.greenhouse.io/embed/job_board?for=peloton",
     "location": "Remote / Hybrid",
     "notes": "Connected fitness, consumer hardware + software + subscription."
+  },
+  {
+    "name": "Trupanion",
+    "ats_type": "other",
+    "careers_url": "https://careers.smartrecruiters.com/trupanion1",
+    "board_id": "trupanion1",
+    "location": "Seattle, WA",
+    "notes": "Pet insurance leader. Seattle HQ — strong local opportunity. NASDAQ listed (TRUP). SmartRecruiters ATS."
+  },
+  {
+    "name": "Pumpkin",
+    "ats_type": "lever",
+    "careers_url": "https://jobs.lever.co/pumpkin",
+    "board_id": "pumpkin",
+    "location": "Remote / New York, NY",
+    "notes": "Pet insurance and wellness. Remote-friendly. HQ in Broadway, NJ."
+  },
+  {
+    "name": "Lemonade",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/Lemonade",
+    "board_id": "Lemonade",
+    "location": "Remote / New York, NY",
+    "notes": "AI-powered insurance (pet, home, car). NYSE listed (LMND). Tech-forward. Careers landing page: makers.lemonade.com."
+  },
+  {
+    "name": "Headway",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/headway",
+    "board_id": "headway",
+    "location": "Remote",
+    "notes": "Mental health marketplace. Connects therapists with insurance. Fast-growing. Series D $325M+."
+  },
+  {
+    "name": "Spring Health",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/springhealth66",
+    "board_id": "springhealth66",
+    "location": "Remote",
+    "notes": "Mental health benefits platform. AI-powered care matching. Enterprise clients include Microsoft, Target, Delta."
+  },
+  {
+    "name": "Cerebral",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/cerebral",
+    "board_id": "cerebral",
+    "location": "Remote",
+    "notes": "Mental health telehealth platform. Prescriptions + therapy."
+  },
+  {
+    "name": "Galileo Health",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/galileo",
+    "board_id": "galileo",
+    "location": "Remote",
+    "notes": "Virtual primary care. AI-assisted clinical workflows. NYC-based."
+  },
+  {
+    "name": "Brightline",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/hellobrightline",
+    "board_id": "hellobrightline",
+    "location": "Remote",
+    "notes": "Child and teen mental health. Virtual behavioral health platform."
+  },
+  {
+    "name": "Levels",
+    "ats_type": "workable",
+    "careers_url": "https://apply.workable.com/levelshealth/",
+    "board_id": "levelshealth",
+    "location": "Remote",
+    "notes": "Metabolic health / CGM platform. Consumer health tech. Data-driven wellness."
+  },
+  {
+    "name": "Function Health",
+    "ats_type": "breezy",
+    "careers_url": "https://function-health.breezy.hr/",
+    "board_id": "function-health",
+    "location": "Remote",
+    "notes": "Lab testing platform. 100+ biomarker tests. Consumer health. a16z-backed."
+  },
+  {
+    "name": "Weights & Biases",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/wandb",
+    "location": "Remote",
+    "notes": "AI/ML developer tools platform. Analytics, instrumentation."
+  },
+  {
+    "name": "Sierra",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/Sierra",
+    "location": "Remote / San Francisco, CA",
+    "notes": "AI agents for customer experience. Founded by Bret Taylor (ex-Salesforce CEO). Series A unicorn."
+  },
+  {
+    "name": "Replicate",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/replicate",
+    "location": "Remote",
+    "notes": "ML model deployment platform. Run open-source models in the cloud. YC-backed."
+  },
+  {
+    "name": "Modal Labs",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/modal",
+    "location": "Remote",
+    "notes": "Cloud compute for AI/ML. Serverless GPU infrastructure. Developer tools."
+  },
+  {
+    "name": "Baseten",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/baseten",
+    "location": "Remote / San Francisco, CA",
+    "notes": "ML model serving infrastructure. GPU inference platform."
+  },
+  {
+    "name": "Together AI",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/togetherai",
+    "location": "Remote / San Francisco, CA",
+    "notes": "AI inference and training cloud. Open-source LLM platform."
+  },
+  {
+    "name": "Pinecone",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/pinecone",
+    "location": "Remote",
+    "notes": "Vector database for AI. Serverless, fully managed. Market leader in vector search."
+  },
+  {
+    "name": "Weaviate",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/weaviate",
+    "location": "Remote",
+    "notes": "Open-source vector database. AI-native search. Remote-first."
+  },
+  {
+    "name": "LangChain",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/langchain",
+    "location": "Remote / San Francisco, CA",
+    "notes": "LLM application framework. LangSmith observability platform. Developer tools."
+  },
+  {
+    "name": "ElevenLabs",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/elevenlabs",
+    "location": "Remote",
+    "notes": "AI voice synthesis and cloning. Text-to-speech platform. Remote-first."
+  },
+  {
+    "name": "Decagon",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/decagon",
+    "location": "Remote / San Francisco, CA",
+    "notes": "AI customer support agents. Enterprise conversational AI."
+  },
+  {
+    "name": "Maven AGI",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/maven-agi",
+    "location": "Remote",
+    "notes": "AI enterprise agents. Autonomous customer support. Generative AI."
+  },
+  {
+    "name": "11x",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/11x",
+    "location": "Remote / San Francisco, CA",
+    "notes": "AI digital workers for sales. Autonomous SDR/BDR agents."
+  },
+  {
+    "name": "Automattic",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/automatticcareers",
+    "location": "Remote",
+    "notes": "WordPress.com, Tumblr, WooCommerce, Jetpack. 100% distributed company since founding."
+  },
+  {
+    "name": "Doist",
+    "ats_type": "workable",
+    "careers_url": "https://apply.workable.com/doist/",
+    "location": "Remote",
+    "notes": "Todoist, Twist. Fully remote since 2007. Async-first culture."
+  },
+  {
+    "name": "Buffer",
+    "ats_type": "ashby",
+    "careers_url": "https://buffer.com/journey",
+    "location": "Remote",
+    "notes": "Social media management platform. Fully remote, transparent culture. Embeds Ashby on own domain."
+  },
+  {
+    "name": "37signals",
+    "ats_type": "workable",
+    "careers_url": "https://apply.workable.com/37signals/",
+    "location": "Remote",
+    "notes": "Basecamp, HEY email. Fully remote. Known for product-led, small-team philosophy."
+  },
+  {
+    "name": "Help Scout",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/helpscout",
+    "location": "Remote",
+    "notes": "Help desk and customer support SaaS. Fully remote since founding."
+  },
+  {
+    "name": "Pitch",
+    "ats_type": "greenhouse",
+    "careers_url": "https://boards.greenhouse.io/pitch",
+    "location": "Remote / Berlin",
+    "notes": "Collaborative presentation software. European-founded, remote-friendly."
+  },
+  {
+    "name": "Sanity",
+    "ats_type": "workable",
+    "careers_url": "https://apply.workable.com/sanity/",
+    "location": "Remote",
+    "notes": "Headless CMS platform. Developer tools, content infrastructure."
+  },
+  {
+    "name": "Confluent",
+    "ats_type": "ashby",
+    "careers_url": "https://jobs.ashbyhq.com/confluent",
+    "location": "Remote",
+    "notes": "Apache Kafka / data streaming. NASDAQ listed (CFLT). Remote-first."
+  },
+  {
+    "name": "Snowflake",
+    "ats_type": "workday",
+    "careers_url": "https://careers.snowflake.com/us/en/search-results",
+    "location": "Remote / Bellevue, WA",
+    "notes": "Cloud data platform. NYSE listed (SNOW). Bellevue office — local opportunity."
+  },
+  {
+    "name": "Dropbox",
+    "ats_type": "greenhouse",
+    "careers_url": "https://boards.greenhouse.io/dropbox",
+    "location": "Remote",
+    "notes": "Cloud storage/collaboration. Virtual First (remote-first since 2020). NASDAQ (DBX)."
+  },
+  {
+    "name": "DocuSign",
+    "ats_type": "icims",
+    "careers_url": "https://uscareers-docusign.icims.com",
+    "location": "Remote / Seattle, WA",
+    "notes": "E-signature and agreement cloud. Seattle office. NASDAQ (DOCU)."
+  },
+  {
+    "name": "Algolia",
+    "ats_type": "greenhouse",
+    "careers_url": "https://job-boards.greenhouse.io/algolia",
+    "location": "Remote",
+    "notes": "Search-as-a-service API. Developer tools. AI search and recommendations."
   }
 ]

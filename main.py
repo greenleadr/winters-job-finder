@@ -265,6 +265,20 @@ def _llm_rescore(jobs: list[dict[str, Any]], profile: dict[str, Any],
 # Pipeline
 # ---------------------------------------------------------------------------
 
+def _regenerate_dashboard(conn: Any) -> None:
+    """Regenerate docs/index.html from current DB state. Safe to call anytime."""
+    try:
+        from dashboard import generate_dashboard
+        from pathlib import Path
+        docs_dir = Path(__file__).resolve().parent / "docs"
+        docs_dir.mkdir(exist_ok=True)
+        html = generate_dashboard(conn)
+        (docs_dir / "index.html").write_text(html)
+        print(f"Dashboard written to docs/index.html", file=sys.stderr)
+    except Exception as exc:
+        print(f"Dashboard generation failed: {exc}", file=sys.stderr)
+
+
 def run() -> None:
     """Execute the full pipeline."""
 
@@ -276,7 +290,10 @@ def run() -> None:
     print(f"\nCollected {len(raw_jobs)} total jobs", file=sys.stderr)
 
     if not raw_jobs:
-        print("No jobs collected — exiting.", file=sys.stderr)
+        print("No jobs collected — regenerating dashboard and exiting.", file=sys.stderr)
+        conn = db.init_db()
+        _regenerate_dashboard(conn)
+        conn.close()
         return
 
     # 2b. Filter stale postings (>30 days old)
@@ -306,8 +323,9 @@ def run() -> None:
     print(f"After negative keyword filter: {len(filtered)}", file=sys.stderr)
 
     if not filtered:
-        print("No new jobs after filtering — saving raw and exiting.", file=sys.stderr)
+        print("No new jobs after filtering — saving raw, regenerating dashboard, and exiting.", file=sys.stderr)
         db.save_jobs(conn, raw_jobs)
+        _regenerate_dashboard(conn)
         conn.close()
         return
 
@@ -401,16 +419,7 @@ def run() -> None:
         print(f"Marked {closed_count} jobs as closed", file=sys.stderr)
 
     # 9c. Generate dashboard
-    try:
-        from dashboard import generate_dashboard
-        from pathlib import Path
-        docs_dir = Path(__file__).resolve().parent / "docs"
-        docs_dir.mkdir(exist_ok=True)
-        html = generate_dashboard(conn)
-        (docs_dir / "index.html").write_text(html)
-        print(f"Dashboard written to docs/index.html", file=sys.stderr)
-    except Exception as exc:
-        print(f"Dashboard generation failed: {exc}", file=sys.stderr)
+    _regenerate_dashboard(conn)
 
     conn.close()
 
@@ -432,4 +441,20 @@ def run() -> None:
 
 
 if __name__ == "__main__":
-    run()
+    import traceback
+    try:
+        run()
+    except Exception as exc:
+        # Don't let uncaught exceptions prevent the dashboard commit step.
+        # Regenerate the dashboard from whatever DB state exists, then exit 0
+        # so the workflow can still commit + deploy the latest docs/.
+        print(f"\nPIPELINE ERROR: {exc}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        try:
+            conn = db.init_db()
+            _regenerate_dashboard(conn)
+            conn.close()
+        except Exception as dash_exc:
+            print(f"Dashboard fallback also failed: {dash_exc}", file=sys.stderr)
+        # Exit 0 so commit step runs. CI still surfaces the error in the logs.
+        sys.exit(0)
