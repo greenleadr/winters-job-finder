@@ -59,9 +59,30 @@ _TITLE_TOKENS = [
     "senior manager", "associate director",
 ]
 
+# Marketing-family titles that must NOT score positively. Adjacency-based so
+# "Product Manager, Marketing Technology" (a legitimate PM role) does NOT
+# match — the patterns require word-level whitespace, not commas/other tokens.
+_EXCLUDED_TITLE_RE = re.compile(
+    r"\b("
+    r"product\s+marketing|pmm|"
+    r"growth\s+marketing|demand\s+gen(?:eration)?|"
+    r"brand\s+marketing|field\s+marketing|content\s+marketing|"
+    r"marketing\s+manager|marketing\s+director|"
+    r"head\s+of\s+marketing|vp\s+(?:of\s+)?marketing|"
+    r"chief\s+marketing\s+officer|cmo"
+    r")\b",
+    re.I,
+)
+
 
 def _score_title(job_title: str, target_titles: list[str]) -> int:
     jt = _lower(job_title)
+
+    # Hard exclusion: marketing-family roles score 0 regardless of keyword
+    # overlap with target titles. This is a backstop in case the upstream
+    # title filter in main.py is bypassed.
+    if _EXCLUDED_TITLE_RE.search(jt):
+        return 0
 
     # Exact match (case-insensitive)
     for t in target_titles:

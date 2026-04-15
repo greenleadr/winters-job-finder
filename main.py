@@ -121,6 +121,24 @@ _NEGATIVE_RE = re.compile(
     re.I,
 )
 
+# Title-only exclusions — reject roles whose TITLE matches a marketing-family
+# pattern. Applied to the job title only (not description) to avoid false
+# positives from JDs that mention "product marketing team" in passing.
+# Carefully crafted so "Product Manager, Marketing Technology" still passes:
+# the marketing patterns require adjacency ("product marketing" with only
+# whitespace between), so "Product Manager, Marketing ..." does not match.
+_EXCLUDED_TITLE_RE = re.compile(
+    r"\b("
+    r"product\s+marketing|pmm|"
+    r"growth\s+marketing|demand\s+gen(?:eration)?|"
+    r"brand\s+marketing|field\s+marketing|content\s+marketing|"
+    r"marketing\s+manager|marketing\s+director|"
+    r"head\s+of\s+marketing|vp\s+(?:of\s+)?marketing|"
+    r"chief\s+marketing\s+officer|cmo"
+    r")\b",
+    re.I,
+)
+
 
 # ---------------------------------------------------------------------------
 # 1. Profile loading
@@ -217,6 +235,15 @@ def _passes_negative_filter(job: dict[str, Any]) -> bool:
     """Return False if the job contains negative keywords (intern, part-time, etc.)."""
     text = f"{job.get('title', '')} {(job.get('description', '') or '')[:500]}"
     return not _NEGATIVE_RE.search(text)
+
+
+def _passes_title_exclusion(job: dict[str, Any]) -> bool:
+    """Return False if the job title is a marketing-family role.
+
+    Title-only match (not description) to avoid false positives from product
+    JDs that reference "the product marketing team" in passing.
+    """
+    return not _EXCLUDED_TITLE_RE.search(job.get("title", ""))
 
 
 def _matches_location(job: dict[str, Any]) -> bool:
@@ -321,6 +348,10 @@ def run() -> None:
     # 4b. Negative keyword filter
     filtered = [j for j in filtered if _passes_negative_filter(j)]
     print(f"After negative keyword filter: {len(filtered)}", file=sys.stderr)
+
+    # 4c. Title exclusion filter (marketing-family roles)
+    filtered = [j for j in filtered if _passes_title_exclusion(j)]
+    print(f"After title exclusion filter: {len(filtered)}", file=sys.stderr)
 
     if not filtered:
         print("No new jobs after filtering — saving raw, regenerating dashboard, and exiting.", file=sys.stderr)
