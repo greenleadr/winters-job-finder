@@ -259,6 +259,22 @@ def _call_claude(prompt: str, api_key: str, retries: int = 2) -> dict[str, Any] 
     return None
 
 
+def _promote_high_confidence(result: dict[str, Any] | None) -> dict[str, Any] | None:
+    # A Maybe at llm_score >= 9 reads as model over-hedging — promote to Apply.
+    # Skip is left alone: a high score with Skip signals a real conflict (e.g.
+    # dealbreaker) that the model wants to flag.
+    if not result:
+        return result
+    try:
+        score = int(result.get("llm_score", 0))
+    except (TypeError, ValueError):
+        return result
+    if score >= 9 and result.get("recommendation") == "Maybe":
+        result = dict(result)
+        result["recommendation"] = "Apply"
+    return result
+
+
 def score_job_llm(
     job: dict[str, Any],
     profile: dict[str, Any],
@@ -281,7 +297,7 @@ def score_job_llm(
         )
         cached = get_llm_cache(db_conn, jid)
         if cached:
-            return cached
+            return _promote_high_confidence(cached)
 
     prompt = _build_prompt(job, profile)
     result = _call_claude(prompt, api_key)
@@ -290,7 +306,7 @@ def score_job_llm(
     if result and db_conn is not None:
         set_llm_cache(db_conn, jid, result)
 
-    return result
+    return _promote_high_confidence(result)
 
 
 def score_jobs_llm(
